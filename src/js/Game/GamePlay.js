@@ -1,4 +1,4 @@
-import { calcHealthLevel, calcTileType } from '../utils/utils';
+import { calcHealthLevel, calcTileType } from '../utils/utils.js';
 
 export default class GamePlay {
   constructor() {
@@ -31,9 +31,9 @@ export default class GamePlay {
 
     this.container.innerHTML = `
       <div class="controls">
-        <button data-id="action-restart" class="btn">New Game</button>
-        <button data-id="action-save" class="btn">Save Game</button>
-        <button data-id="action-load" class="btn">Load Game</button>
+        <button data-id="action-restart" class="btn">Новая игра</button>
+        <button data-id="action-save" class="btn">Сохранить</button>
+        <button data-id="action-load" class="btn">Загрузить</button>
       </div>
       <div class="board-container">
         <div data-id="board" class="board"></div>
@@ -44,23 +44,25 @@ export default class GamePlay {
     this.saveGameEl = this.container.querySelector('[data-id=action-save]');
     this.loadGameEl = this.container.querySelector('[data-id=action-load]');
 
-    this.newGameEl.addEventListener('click', event => this.onNewGameClick(event));
-    this.saveGameEl.addEventListener('click', event => this.onSaveGameClick(event));
-    this.loadGameEl.addEventListener('click', event => this.onLoadGameClick(event));
+    this.newGameEl.addEventListener('click', (event) => this.onNewGameClick(event));
+    this.saveGameEl.addEventListener('click', (event) => this.onSaveGameClick(event));
+    this.loadGameEl.addEventListener('click', (event) => this.onLoadGameClick(event));
 
     this.boardEl = this.container.querySelector('[data-id=board]');
 
     this.boardEl.classList.add(theme);
+    
     for (let i = 0; i < this.boardSize ** 2; i += 1) {
       const cellEl = document.createElement('div');
       cellEl.classList.add('cell', 'map-tile', `map-tile-${calcTileType(i, this.boardSize)}`);
-      cellEl.addEventListener('mouseenter', event => this.onCellEnter(event));
-      cellEl.addEventListener('mouseleave', event => this.onCellLeave(event));
-      cellEl.addEventListener('click', event => this.onCellClick(event));
+      cellEl.addEventListener('mouseenter', (event) => this.onCellEnter(event));
+      cellEl.addEventListener('mouseleave', (event) => this.onCellLeave(event));
+      cellEl.addEventListener('click', (event) => this.onCellClick(event));
+      
       this.boardEl.appendChild(cellEl);
     }
 
-    this.cells = Array.from(this.boardEl.children);
+    this.cells = [...this.boardEl.children];
   }
 
   /**
@@ -82,7 +84,10 @@ export default class GamePlay {
       healthEl.classList.add('health-level');
 
       const healthIndicatorEl = document.createElement('div');
-      healthIndicatorEl.classList.add('health-level-indicator', `health-level-indicator-${calcHealthLevel(position.character.health)}`);
+      healthIndicatorEl.classList.add(
+        'health-level-indicator', 
+        `health-level-indicator-${calcHealthLevel(position.character.health)}`
+      );
       healthIndicatorEl.style.width = `${position.character.health}%`;
       healthEl.appendChild(healthIndicatorEl);
 

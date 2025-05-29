@@ -1,6 +1,6 @@
-import GamePlay from './game/GamePlay';
-import GameController from './game/GameController';
-import GameStateService from './services/GameStateService';
+import GamePlay from './game/GamePlay.js';
+import GameController from './game/GameController.js';
+import GameStateService from './services/GameStateService.js';
 
 const gamePlay = new GamePlay();
 gamePlay.bindToDOM(document.querySelector('#game-container'));
