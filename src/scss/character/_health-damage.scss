@@ -1,0 +1,38 @@
+@use '../base/colors';
+
+// health
+.health-level {
+  top: 2px;
+  left: 7px;
+  position: absolute;
+  width: 50px;
+  height: 4px;
+  background: #000;
+}
+
+.health-level-indicator {
+  height: 4px;
+}
+
+.health-level-indicator-high {
+  background: #0f0;
+}
+
+.health-level-indicator-normal {
+  background: #ff0;
+}
+
+.health-level-indicator-critical {
+  background: #f00;
+}
+
+// damage
+.damage {
+  position: absolute;
+  width: var(--cell-size);
+  text-align: center;
+  z-index: 999;
+  color: colors.$color_2;
+  font-weight: bold;
+  animation: 500ms fade ease-out;
+}

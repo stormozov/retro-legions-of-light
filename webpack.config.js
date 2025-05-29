@@ -8,7 +8,9 @@ import TerserPlugin from 'terser-webpack-plugin';
 
 export default (env, argv) => {
   const __dirname = dirname(fileURLToPath(import.meta.url));
-  const publicPath = argv.mode === 'production' ? '' : '/';
+  const isProduction = argv.mode === 'production';
+  const publicPath = isProduction ? '' : '/';
+  const cssPlugin = isProduction ? MiniCssExtractPlugin.loader : 'style-loader';
 
   return {
     output: {
@@ -33,13 +35,12 @@ export default (env, argv) => {
           ],
         },
         {
-          test: /\.css$/i,
+          test: /\.(scss|css)$/i,
           use: [
-            {
-              loader: MiniCssExtractPlugin.loader,
-              options: { publicPath: publicPath },
-            },
-            'css-loader'
+            cssPlugin,
+            'css-loader',
+            'postcss-loader',
+            'sass-loader',
           ],
         },
         {

@@ -1,0 +1,43 @@
+@use '../base/colors';
+
+.cell {
+  position: relative;
+
+  &.selected {
+    &::before {
+      content: '';
+      display: block;
+      position: absolute;
+  
+      width: var(--cell-size);
+      height: var(--cell-size);
+      
+      border: 4px solid;
+      border-radius: 32px;
+      box-sizing: border-box;
+      
+      opacity: 0.9;
+    }
+  }  
+
+  &.selected-yellow {
+    &::before {
+      border-color: colors.$border-color_1;
+      border-style: solid;
+    }
+  }
+
+  &.selected-green {
+    &::before {
+      border-color: colors.$border-color_2;
+      border-style: dashed;
+    }
+  }
+
+  &.selected-red {
+    &::before {
+      border-color: colors.$border-color_3;
+      border-style: dashed;
+    }
+  }
+}

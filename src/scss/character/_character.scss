@@ -1,0 +1,38 @@
+.character {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  position: absolute;
+  z-index: 99;
+
+  &.generic {
+    background: url('../img/characters/generic.png');
+  }
+
+  &.bowman {
+    background: url('../img/characters/bowman.png');
+  }
+
+  &.daemon {
+    background: url('../img/characters/daemon.png');
+  }
+
+  &.magician {
+    background: url('../img/characters/magician.png');
+  }
+
+  &.swordsman {
+    background: url('../img/characters/swordsman.png');
+  }
+
+  &.undead {
+    background: url('../img/characters/undead.png');
+  }
+
+  &.vampire {
+    background: url('../img/characters/vampire.png');
+  }
+
+  &.zombie {
+    background: url('../img/characters/zombie.png');
+  }
+}

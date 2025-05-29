@@ -1,0 +1,36 @@
+@use '../base/colors';
+
+.controls {
+  text-align: center;
+  margin: 50px 0;
+}
+
+.btn {
+  // Отображение
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+
+  // Шрифт
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5;
+
+  // Цвет
+  color: colors.$color_1;
+  background-color: colors.$background-color_1;
+
+  // Отступы
+  padding: .375rem .75rem;
+
+  // Границы
+  border: none;
+  border-radius: .25rem;
+
+  // Переходы
+  transition:
+    color .15s ease-in-out,
+    background-color .15s ease-in-out,
+    border-color .15s ease-in-out,
+    box-shadow .15s ease-in-out;
+}

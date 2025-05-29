@@ -21,7 +21,6 @@ export default defineConfig([
         sourceType: 'module'
       }
     },
-    ignores: ['dist', 'node_modules', 'coverage', 'docs'],
     rules: {
       'no-var': 'error',
       'prefer-const': 'error',
@@ -42,6 +41,24 @@ export default defineConfig([
     files: ['**/*.test.js'],
     rules: {
       'jest/prefer-expect-assertions': 'off'
+    }
+  },
+
+  // Игнорирование файлов
+  {
+    files: ['dist/**/*', 'node_modules/**/*', 'coverage/**/*', 'docs/**/*'],
+    rules: {
+      'no-var': 'off',
+      'prefer-const': 'off',
+      'no-dupe-keys': 'off',
+      'no-dupe-args': 'off',
+      'no-dupe-class-members': 'off',
+      'no-duplicate-case': 'off',
+      'indent': 'off',
+      'quotes': 'off',
+      'no-multiple-empty-lines': 'off',
+      'max-len': 'off',
+      'eol-last': 'off'
     }
   }
 ]);
