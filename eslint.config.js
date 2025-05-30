@@ -2,13 +2,16 @@ import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
 import eslintPluginJest from 'eslint-plugin-jest';
 import globals from 'globals';
+import typescriptEslintPlugin from '@typescript-eslint/eslint-plugin';
+import typescriptEslintParser from '@typescript-eslint/parser';
 
 export default defineConfig([
   // Основной конфиг для всех файлов
   {
     ...js.configs.recommended,
     plugins: {
-      jest: eslintPluginJest
+      jest: eslintPluginJest,
+      '@typescript-eslint': typescriptEslintPlugin
     },
     languageOptions: {
       globals: {
@@ -16,11 +19,13 @@ export default defineConfig([
         ...globals.node,
         ...globals.es2021
       },
+      parser: typescriptEslintParser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module'
       }
     },
+    files: ['**/*.ts', '**/*.tsx'],
     rules: {
       'no-var': 'error',
       'prefer-const': 'error',
@@ -38,7 +43,7 @@ export default defineConfig([
 
   // Переопределение для тестовых файлов
   {
-    files: ['**/*.test.js'],
+    files: ['**/*.test.ts'],
     rules: {
       'jest/prefer-expect-assertions': 'off'
     }

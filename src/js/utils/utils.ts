@@ -1,4 +1,4 @@
-import TILE_TYPES from '../types/tile-types.js';
+import TILE_TYPES from '../types/tile-types';
 
 /**
  * Возвращает тип ячейки на поле.
@@ -24,7 +24,7 @@ import TILE_TYPES from '../types/tile-types.js';
  * calcTileType(7, 8); // top-right
  * ```
  * */
-export function calcTileType(index, boardSize) {
+export function calcTileType(index: number, boardSize: number): string {
   const row = Math.floor(index / boardSize);
   const col = index % boardSize;
   const colType = col === 0 ? 0 : col === boardSize - 1 ? 2 : 1;
@@ -35,7 +35,17 @@ export function calcTileType(index, boardSize) {
   return TILE_TYPES[1][colType]; // средние ряды
 }
 
-export function calcHealthLevel(health) {
+/**
+ * Возвращает уровень здоровья персонажа.
+ * 
+ * @param {number} health - здоровье персонажа в виде целого числа.
+ * 
+ * @returns {string} уровень здоровья в виде строки:
+ * - critical
+ * - normal
+ * - high
+ */
+export function calcHealthLevel(health: number): string {
   if (health < 15) return 'critical';
   if (health < 50) return 'normal';
 

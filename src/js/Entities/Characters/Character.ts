@@ -1,5 +1,9 @@
+import ICharacter from '../../interface/ICharacter';
+
 /**
  * Базовый класс, от которого наследуются классы персонажей.
+ * 
+ * Реализовывает интерфейс `ICharacter`
  * 
  * @property {number} level - уровень персонажа, от 1 до 4.
  * @property {number} attack - показатель атаки.
@@ -13,13 +17,20 @@
  * - undead
  * - vampire
  */
-export default class Character {
-  constructor(level, type = 'generic') {
+export default class Character implements ICharacter {
+  level: number;
+  type: string;
+  attack: number;
+  defense: number;
+  health: number;
+  // TODO: Написать enum для типа персонажа
+
+  constructor(level: number, type: string = 'generic') {
     this.level = level;
+    this.type = type;
     this.attack = 0;
     this.defense = 0;
     this.health = 50;
-    this.type = type;
     // TODO: выбросите исключение, если кто-то использует "new Character()"
   }
 }

@@ -5,7 +5,7 @@
  * 
  * @type {string[][]}
  */
-const TILE_TYPES = [
+const TILE_TYPES: string[][] = [
   ['top-left', 'top', 'top-right'],
   ['left', 'center', 'right'],
   ['bottom-left', 'bottom', 'bottom-right']

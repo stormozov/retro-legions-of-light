@@ -1,4 +1,4 @@
-import { relative, resolve, dirname, posix } from 'node:path';
+import { relative, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import HtmlWebPackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
@@ -17,14 +17,22 @@ export default (env, argv) => {
       path: resolve(__dirname, 'dist'),
       publicPath: publicPath,
     },
+    resolve: {
+      extensions: ['.js', '.jsx', '.tsx', '.ts'],
+    },
     module: {
       rules: [
         {
-          test: /\.js$/,
+          test: /\.(?:js|ts)$/,
           exclude: /node_modules/,
           use: {
             loader: 'babel-loader',
           },
+        },
+        {
+          test: /\.tsx?$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
         },
         {
           test: /\.html$/,

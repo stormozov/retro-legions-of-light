@@ -11,7 +11,7 @@ describe('Модуль utils', () => {
       { index: 15, boardSize: 8, expected: 'right' },
       { index: 56, boardSize: 8, expected: 'bottom-left' },
       { index: 57, boardSize: 8, expected: 'bottom' },
-      { index: 63, boardSize: 8, expected: 'bottom-right' },
+      { index: 63, boardSize: 8, expected: 'bottom-right', },
     ];
 
     testCases.forEach(({ index, boardSize, expected }) => {

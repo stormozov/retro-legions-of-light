@@ -1,3 +1,6 @@
+/**
+ * Объект с курсорами.
+ */
 const cursors = {
   auto: 'auto',
   pointer: 'pointer',
