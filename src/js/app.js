@@ -1,5 +1,5 @@
-import GamePlay from './game/GamePlay.js';
-import GameController from './game/GameController.js';
+import GamePlay from './Game/GamePlay.js';
+import GameController from './Game/GameController.js';
 import GameStateService from './services/GameStateService.js';
 
 const gamePlay = new GamePlay();
