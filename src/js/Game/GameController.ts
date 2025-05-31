@@ -1,6 +1,6 @@
-import IGameController from '../interface/IGameController';
 import GameStateService from '../services/GameStateService';
-import themes from '../themes/themes';
+import { Theme } from '../types/enums';
+import { IGameController } from '../types/interfaces';
 import GamePlay from './GamePlay';
 
 /**
@@ -26,7 +26,7 @@ export default class GameController implements IGameController {
    * Инициализирует игровой процесс.
    */
   init(): void {
-    this.gamePlay.drawUi(themes.prairie);
+    this.gamePlay.drawUi(Theme.Prairie);
     // TODO: load saved stated from stateService
   }
 

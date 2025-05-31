@@ -1,4 +1,4 @@
-import ICharacter from '../../interface/ICharacter';
+import { ICharacter } from '../../types/interfaces';
 
 /**
  * Базовый класс, от которого наследуются классы персонажей.

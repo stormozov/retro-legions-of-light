@@ -1,9 +1,9 @@
 import { calcHealthLevel, calcTileType } from '../utils/utils';
 import { 
   CellEventListener, 
-  GameActionListener, 
-  FigurePositionInBoard 
-} from '../types/game-play-types';
+  GameActionListener,
+  FigurePositionInBoard
+} from '../types/types';
 
 export default class GamePlay {
   private boardSize: number;

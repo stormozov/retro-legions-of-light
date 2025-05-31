@@ -1,38 +1,55 @@
-import TILE_TYPES from '../types/tile-types';
+import { FieldCellEdgeType } from '../types/types';
 
 /**
- * Возвращает тип ячейки на поле.
+ * Определяет тип края для позиции в линейном диапазоне (строка/столбец).
  * 
- * @param {number} index - индекс поля.
- * @param {number} boardSize - размер квадратного поля (в длину или ширину).
+ * @param position - Позиция в диапазоне (от 0 до size-1).
+ * @param size - Размер диапазона.
  * 
- * @returns {string} тип ячейки на поле:
- * - top-left
- * - top-right
- * - top
- * - bottom-left
- * - bottom-right
- * - bottom
- * - right
- * - left
- * - center
+ * @returns {number} Тип края:
+ *   - 0: начало диапазона (первая позиция).
+ *   - 2: конец диапазона (последняя позиция).
+ *   - 1: середина диапазона.
+ */
+export function getFieldCellEdgeType(position: number, size: number): FieldCellEdgeType {
+  if (position === 0) return 0;
+  if (position === size - 1) return 2;
+  return 1;
+}
+
+/**
+ * Определяет тип ячейки на игровом поле по её индексу.
+ * 
+ * @param {number} index - Плоский индекс ячейки.
+ * @param {number} boardSize - Размер квадратного поля.
+ * 
+ * @returns {string} Тип ячейки. Возможные значения:
+ *   - 'top-left':    верхний-левый угол
+ *   - 'top':         верхний край (не угловой)
+ *   - 'top-right':   верхний-правый угол
+ *   - 'left':        левый край (не угловой)
+ *   - 'center':      центр (не на краях)
+ *   - 'right':       правый край (не угловой)
+ *   - 'bottom-left': нижний-левый угол
+ *   - 'bottom':      нижний край (не угловой)
+ *   - 'bottom-right':нижний-правый угол
  *
  * @example
  * ```js
- * calcTileType(0, 8); // top-left
- * calcTileType(1, 8); // top
- * calcTileType(7, 8); // top-right
+ * calcTileType(5, 8);   // 'top'
+ * calcTileType(56, 8);  // 'bottom-left'
+ * calcTileType(18, 8);  // 'center'
  * ```
- * */
+ */
 export function calcTileType(index: number, boardSize: number): string {
-  const row = Math.floor(index / boardSize);
-  const col = index % boardSize;
-  const colType = col === 0 ? 0 : col === boardSize - 1 ? 2 : 1;
-  
-  if (row === 0) return TILE_TYPES[0][colType]; // верхний ряд
-  if (row === boardSize - 1) return TILE_TYPES[2][colType]; // нижний ряд
-  
-  return TILE_TYPES[1][colType]; // средние ряды
+  const rowType = getFieldCellEdgeType(Math.floor(index / boardSize), boardSize);
+  const colType = getFieldCellEdgeType(index % boardSize, boardSize);
+
+  return [
+    'top-left', 'top', 'top-right',
+    'left', 'center', 'right',
+    'bottom-left', 'bottom', 'bottom-right'
+  ][rowType * 3 + colType];
 }
 
 /**
