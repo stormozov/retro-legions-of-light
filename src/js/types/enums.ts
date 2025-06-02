@@ -12,8 +12,8 @@
  *
  * @example
  * ```typescript
- * import { Theme } from './themes';
- * const currentTheme = Theme.prairie;
+ * import { Theme } from './types/enums';
+ * const currentTheme = Theme.Prairie;
  * ```
  *
  * @enum {string}
@@ -23,4 +23,18 @@ export enum Theme {
   Desert = 'desert',
   Arctic = 'arctic',
   Mountain = 'mountain',
+}
+
+/**
+ * Перечисление возможных типов персонажей.
+ *
+ * @enum {string}
+ */
+export enum CharacterType {
+  Swordsman = 'swordsman',
+  Bowman = 'bowman',
+  Magician = 'magician',
+  Demon = 'demon',
+  Undead = 'undead',
+  Vampire = 'vampire',
 }

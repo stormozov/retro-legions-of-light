@@ -1,3 +1,5 @@
+import { CharacterType } from './enums';
+
 /**
  * Тип позиции ячейки относительно края поля в одном измерении (строка или столбец).
  * 
@@ -33,3 +35,22 @@ export type CellEventListener = (index: number) => void;
 */
 export type GameActionListener = () => void;
 
+/**
+ * Тип для уровня персонажа.
+ */
+export type CharacterLevel = 1 | 2 | 3 | 4;
+
+/**
+ * Возможные свойства класса персонажа.
+ */
+export type PossibleCharacterSetAttributes = {
+  level?: CharacterLevel;
+  attack?: number;
+  defense?: number;
+  health?: number;
+}
+
+/**
+ * Тип ошибки, возникающий при взаимодействии с абстрактным классом.
+ */
+export type AbstractClassErrorType = 'CONSTRUCTOR' | 'ABSTRACT' | 'METHOD';

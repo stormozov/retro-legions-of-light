@@ -1,4 +1,4 @@
-import Character from '../Entities/Characters/Character';
+import Character from '../Entities/Character';
 
 export default class PositionedCharacter {
   private character: Character;

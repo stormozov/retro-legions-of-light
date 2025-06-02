@@ -1,4 +1,4 @@
-import Character from '../Entities/Characters/Character';
+import Character from '../Entities/Character';
 import Team from '../Entities/Team';
 
 /**

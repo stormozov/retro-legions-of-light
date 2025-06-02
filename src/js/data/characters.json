@@ -1,0 +1,34 @@
+{
+  "characters": {
+    "swordsman": {
+      "attack": 40,
+      "defense": 10,
+      "health": 100
+    },
+    "bowman": {
+      "attack": 25,
+      "defense": 25,
+      "health": 100
+    },
+    "magician": {
+      "attack": 10,
+      "defense": 40,
+      "health": 100
+    },
+    "demon": {
+      "attack": 10,
+      "defense": 10,
+      "health": 100
+    },
+    "undead": {
+      "attack": 40,
+      "defense": 10,
+      "health": 100
+    },
+    "vampire": {
+      "attack": 25,
+      "defense": 25,
+      "health": 100
+    }
+  }
+}

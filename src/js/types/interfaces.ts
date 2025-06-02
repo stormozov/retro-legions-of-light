@@ -1,12 +1,17 @@
+import { CharacterType } from './enums';
+import { CharacterLevel, PossibleCharacterSetAttributes } from './types';
+
 /**
  * Интерфейс для персонажа.
  */
 export interface ICharacter {
-  level: number;
-  type: string;
+  level: CharacterLevel;
+  type: CharacterType;
   attack: number;
   defense: number;
   health: number;
+
+  setAttributes(attrs: PossibleCharacterSetAttributes): void;
 }
 
 /**
