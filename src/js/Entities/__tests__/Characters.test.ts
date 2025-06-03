@@ -21,6 +21,10 @@ describe('Модуль Characters', () => {
 
     describe('Конструктор', () => {
       it('создан объект класса; не выбрасывает ошибку', () => {
+        expect(bowman).toBeInstanceOf(Bowman);
+      });
+
+      it('создан объект класса; наследует класс Character', () => {
         expect(bowman).toBeInstanceOf(Character);
       });
     });
