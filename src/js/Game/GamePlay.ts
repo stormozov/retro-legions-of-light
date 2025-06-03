@@ -2,8 +2,8 @@ import { calcHealthLevel, calcTileType } from '../utils/utils';
 import { 
   CellEventListener, 
   GameActionListener,
-  FigurePositionInBoard
 } from '../types/types';
+import PositionedCharacter from './PositionedCharacter';
 
 export default class GamePlay {
   private boardSize: number;
@@ -86,12 +86,14 @@ export default class GamePlay {
   }
 
   /**
-   * Рисует фигуры (с символами) на доске.
-   *
-   * @param {FigurePositionInBoard} positions массив объектов {position, character}
-   */
-  redrawPositions(positions: FigurePositionInBoard[]): void {
+ * Рисует фигуры (с символами) на доске.
+ *
+ * @param {FigurePositionInBoard} positions массив объектов {position, character}
+ */
+  redrawPositions(positions: PositionedCharacter[]): void {
     for ( const cell of this.cells ) cell.innerHTML = '';
+
+    const fragment = document.createDocumentFragment();
 
     for ( const position of positions ) {
       const cellEl = this.boardEl!.children[position.position] as HTMLDivElement;
@@ -107,10 +109,12 @@ export default class GamePlay {
         `health-level-indicator-${calcHealthLevel(position.character.health)}`
       );
       healthIndicatorEl.style.width = `${position.character.health}%`;
-      
+
       healthEl.appendChild(healthIndicatorEl);
       charEl.appendChild(healthEl);
-      cellEl.appendChild(charEl);
+      fragment.appendChild(charEl);
+
+      cellEl.appendChild(fragment);
     }
   }
 

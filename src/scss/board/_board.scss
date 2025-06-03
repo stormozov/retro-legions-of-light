@@ -8,8 +8,7 @@
 .board {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
-  grid-column-gap: 2px;
-  grid-row-gap: 2px;
+  grid-gap: 2px;
 
   &.prairie {
     --map-tile-top-left-url: url('../img/prairie/map-tile-top-left.png');
