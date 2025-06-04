@@ -4,6 +4,7 @@ import {
   GameActionListener,
 } from '../types/types';
 import PositionedCharacter from './PositionedCharacter';
+import { Cursor } from '../types/enums';
 
 export default class GamePlay {
   private boardSize: number;
@@ -248,7 +249,7 @@ export default class GamePlay {
     });
   }
 
-  setCursor(cursor: string): void {
+  setCursor(cursor: Cursor): void {
     if ( this.boardEl ) this.boardEl.style.cursor = cursor;
   }
 

@@ -38,3 +38,15 @@ export enum CharacterType {
   Undead = 'undead',
   Vampire = 'vampire',
 }
+
+/**
+ * Перечисления возможных курсоров.
+ * 
+ * @enum {string}
+ */
+export enum Cursor {
+  Auto = 'auto',
+  Pointer = 'pointer',
+  Crosshair = 'crosshair',
+  NotAllowed = 'not-allowed',
+}
