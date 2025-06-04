@@ -1,3 +1,5 @@
+import Character from '../Entities/Character';
+import PositionedCharacter from '../Game/PositionedCharacter';
 import { FieldCellEdgeType } from '../types/types';
 
 /**
@@ -67,4 +69,35 @@ export function calcHealthLevel(health: number): string {
   if (health < 50) return 'normal';
 
   return 'high';
+}
+
+/**
+ * Форматирует информацию о персонаже в виде строки.
+ * 
+ * @param {Character} character - объект персонажа с информацией о персонаже.
+ * 
+ * @returns {string} строка с информацией о персонаже в формате "🎖1 ⚔10 🛡40 ❤50", где:
+ * - 🎖1 - уровень персонажа.
+ * - ⚔10 - атака персонажа.
+ * - 🛡40 - защита персонажа.
+ * - ❤50 - здоровье персонажа.
+ */
+export function formatCharacterInfo(character: Character): string {
+  return `🎖${character.level} ⚔${character.attack} 🛡${character.defense} ❤${character.health}`;
+}
+
+/**
+ * Находит персонажа в списке позиционированных персонажей по индексу.
+ * 
+ * @param {PositionedCharacter[]} characters - список персонажей.
+ * @param {number} index - индекс персонажа в списке.
+ * 
+ * @returns {PositionedCharacter | undefined} персонаж с указанным индексом или 
+ * undefined, если персонаж не найден.
+ */
+export function findCharacterByIndex(
+  characters: PositionedCharacter[], 
+  index: number
+): PositionedCharacter | undefined {
+  return characters.find((character) => character.position === index);
 }
