@@ -1,15 +1,18 @@
 import GameStateService from '../services/GameStateService';
-import { Theme } from '../types/enums';
+import { CharacterType, Theme } from '../types/enums';
 import { IGameController } from '../types/interfaces';
-import GamePlay from './GamePlay';
-import TeamPositioner from './TeamPositioner';
-import PositionedCharacter from './PositionedCharacter';
 import { findCharacterByIndex, formatCharacterInfo } from '../utils/utils';
+import GamePlay from './GamePlay';
+import GameState from './GameState';
+import PositionedCharacter from './PositionedCharacter';
+import TeamPositioner from './TeamPositioner';
 
 export default class GameController implements IGameController {
   private gamePlay: GamePlay;
   private stateService: GameStateService;
   private positionedCharacters: PositionedCharacter[] = [];
+  private selectedCellIndex: number | null = null;
+  private gameState = GameState.from({ isPlayerTurn: true });
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
@@ -26,6 +29,9 @@ export default class GameController implements IGameController {
 
     // Показываем подсказки при наведении курсора мыши на ячейку с персонажем.
     this.showBriefInfo();
+
+    // Подписываемся на клики по ячейкам с правильным this
+    this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
   }
 
   /**
@@ -40,8 +46,60 @@ export default class GameController implements IGameController {
     this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
   }
 
+  /**
+   * Обработчик клика по ячейке игрового поля.
+   * 
+   * Проверяет возможность выбора персонажа и выполняет необходимые действия:
+   * 1. Проверяет существование персонажа на указанной позиции
+   * 2. Проверяет, является ли персонаж игроком
+   * 3. Проверяет, чей сейчас ход
+   * 4. Управляет выделением выбранной ячейки
+   * 
+   * @param {number} index - Индекс ячейки, по которой был произведен клик
+   * @returns {void}
+   * 
+   * @throws {Error} Если попытка выбрать неигрового персонажа
+   * @throws {Error} Если попытка выбрать персонажа во время хода компьютера
+   * 
+   * @example
+   * onCellClick(5); // Выбирает ячейку с индексом 5, если возможно
+   */
   onCellClick(index: number): void {
-    // TODO: react to click
+    const characterPosition = findCharacterByIndex(this.positionedCharacters, index);
+    // Проверяем, существует ли персонаж на выбранной ячейке
+    if ( !characterPosition ) return;
+
+    // Проверяем, является ли выбранный персонаж игровым
+    const characterType = characterPosition.character.type;
+    const playerCharacterTypes = [
+      CharacterType.Swordsman,
+      CharacterType.Bowman,
+      CharacterType.Magician
+    ];
+
+    if ( !playerCharacterTypes.includes(characterType) ) {
+      GamePlay.showError('Это не персонаж игрока');
+      return;
+    }
+
+    // Если клик был на уже выбранную ячейку, ничего не делаем
+    if ( this.selectedCellIndex === index ) return;
+
+    // Если ход компьютера, показываем ошибку
+    if ( !this.gameState.isPlayerTurn ) {
+      GamePlay.showError('Сейчас ход компьютера ');
+      return;
+    }
+
+    // Отменяем выделение предыдущей выбранной ячейки, если она есть
+    if ( this.selectedCellIndex !== null ) {
+      this.gamePlay.deselectCell(this.selectedCellIndex);
+    }
+
+    // Выделяем выбранную ячейку
+    this.gamePlay.selectCell(index);
+
+    this.selectedCellIndex = index;
   }
 
   /**

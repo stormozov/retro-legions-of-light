@@ -54,3 +54,8 @@ export type PossibleCharacterSetAttributes = {
  * Тип ошибки, возникающий при взаимодействии с абстрактным классом.
  */
 export type AbstractClassErrorType = 'CONSTRUCTOR' | 'ABSTRACT' | 'METHOD';
+
+/**
+ * Тип объекта, передаваемого в метод класса GameState.
+ */
+export type isPlayerTurnObject = { isPlayerTurn: boolean };
