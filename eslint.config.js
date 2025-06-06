@@ -4,6 +4,7 @@ import eslintPluginJest from 'eslint-plugin-jest';
 import globals from 'globals';
 import typescriptEslintPlugin from '@typescript-eslint/eslint-plugin';
 import typescriptEslintParser from '@typescript-eslint/parser';
+import stylistic from '@stylistic/eslint-plugin'
 
 export default defineConfig([
   // Основной конфиг для всех файлов
@@ -11,7 +12,8 @@ export default defineConfig([
     ...js.configs.recommended,
     plugins: {
       jest: eslintPluginJest,
-      '@typescript-eslint': typescriptEslintPlugin
+      '@typescript-eslint': typescriptEslintPlugin,
+      '@stylistic': stylistic,
     },
     languageOptions: {
       globals: {
@@ -33,7 +35,7 @@ export default defineConfig([
       'no-dupe-args': 'error',
       'no-dupe-class-members': 'error',
       'no-duplicate-case': 'error',
-      'indent': ['error', 2],
+      '@stylistic/indent': ['error', 2],
       'quotes': ['error', 'single'],
       'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 1 }],
       'max-len': ['error', { code: 120 }],

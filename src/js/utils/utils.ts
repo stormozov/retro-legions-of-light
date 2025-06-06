@@ -1,4 +1,5 @@
 import Character from '../Entities/Character';
+import { playerCharacterTypes } from '../Entities/Heroes';
 import PositionedCharacter from '../Game/PositionedCharacter';
 import { FieldCellEdgeType } from '../types/types';
 
@@ -100,4 +101,13 @@ export function findCharacterByIndex(
   index: number
 ): PositionedCharacter | undefined {
   return characters.find((character) => character.position === index);
+}
+
+/**
+   * Проверяет, является ли тип переданного персонажа типом игрока.
+   * @param {PositionedCharacter} positionedCharacter - Позиционированный персонаж.
+   * @returns {boolean} - true, если персонаж игрока, иначе false.
+   */
+export function isPlayerCharacter(positionedCharacter: PositionedCharacter): boolean {
+  return playerCharacterTypes.includes(positionedCharacter.character.type);
 }
