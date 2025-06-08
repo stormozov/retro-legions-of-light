@@ -249,6 +249,43 @@ export default class GamePlay {
     });
   }
 
+  /**
+   * Анимирует изменение ширины индикатора здоровья персонажа.
+   * 
+   * @param {number} position Индекс клетки персонажа.
+   * @param {number} fromHealth Начальное значение здоровья (в процентах).
+   * @param {number} toHealth Конечное значение здоровья (в процентах).
+   * 
+   * @returns {Promise<void>} Promise, который разрешается после завершения анимации.
+   */
+  animateHealthChange(position: number, fromHealth: number, toHealth: number): Promise<void> {
+    return new Promise((resolve) => {
+      const cellEl = this.boardEl!.children[position] as HTMLDivElement;
+      const healthIndicatorEl = cellEl.querySelector('.health-level-indicator') as HTMLElement;
+
+      if (!healthIndicatorEl) {
+        resolve();
+        return;
+      }
+
+      const duration = 1000;
+      const frameRate = 60;
+      const totalFrames = (duration / 1000) * frameRate;
+      let currentFrame = 0;
+
+      const animate = () => {
+        currentFrame++;
+        const progress = Math.min(currentFrame / totalFrames, 1);
+        const currentWidth = fromHealth + (toHealth - fromHealth) * progress;
+        healthIndicatorEl.style.width = `${currentWidth}%`;
+
+        (progress < 1) ? requestAnimationFrame(animate) : resolve();
+      };
+
+      animate();
+    });
+  }
+
   setCursor(cursor: Cursor): void {
     if ( this.boardEl ) this.boardEl.style.cursor = cursor;
   }

@@ -385,10 +385,12 @@ export default class GameController implements IGameController {
     const target = targetPosition.character;
 
     const damage = Math.max(attacker.attack - target.defense, attacker.attack * 0.1);
+    const oldHealth = target.health;
     target.health -= damage;
 
+    await this.gamePlay.animateHealthChange(targetPosition.position, oldHealth, target.health);
     await this.gamePlay.showDamage(targetPosition.position, damage);
-    this.gamePlay.redrawPositions(this.positionedCharacters);
+
     this.gamePlay.deselectCell(targetPosition.position);
 
     this.selectedCellIndex = null;
