@@ -384,4 +384,51 @@ describe('Класс GameController', () => {
       });
     });
   });
+
+  describe('Метод moveCharacterToCell', () => {
+    let gamePlay: GamePlay;
+    let stateService: any;
+    let gameController: GameController;
+    let playerCharacter: Bowman;
+    let playerPositioned: PositionedCharacter;
+
+    beforeEach(() => {
+      gamePlay = new GamePlay();
+      gameController = new GameController(gamePlay, stateService);
+
+      playerCharacter = new Bowman();
+      playerPositioned = new PositionedCharacter(playerCharacter, 1);
+      gameController['positionedCharacters'] = [playerPositioned];
+      gameController['selectedCellIndex'] = 1;
+      gameController['gameState'] = GameState.from({ isPlayerTurn: true });
+
+      // Mock gamePlay methods
+      gamePlay.redrawPositions = jest.fn();
+      gamePlay.deselectCell = jest.fn();
+    });
+
+    it('должен покрыть обе ветви тернарного оператора в moveCharacterToCell', () => {
+      const anotherCharacter = new Bowman();
+      const anotherPositioned = new PositionedCharacter(anotherCharacter, 8);
+
+      gameController['positionedCharacters'] = [playerPositioned, anotherPositioned];
+      gameController['selectedCellIndex'] = 1;
+
+      const newPosition = 9;
+      (gameController as any).moveCharacterToCell(playerPositioned, newPosition);
+
+      // Проверяем, что старый PositionedCharacter заменен
+      const foundOld = gameController['positionedCharacters'].find(pc => pc === playerPositioned);
+      expect(foundOld).toBeUndefined();
+
+      // Проверяем, что новый PositionedCharacter добавлен
+      const foundNew = gameController['positionedCharacters'].find(pc => pc.position === newPosition);
+      expect(foundNew).toBeDefined();
+      expect(foundNew!.position).toBe(newPosition);
+
+      // Проверяем, что другой PositionedCharacter остался без изменений
+      const foundAnother = gameController['positionedCharacters'].find(pc => pc === anotherPositioned);
+      expect(foundAnother).toBeDefined();
+    });
+  });
 });

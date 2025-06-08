@@ -106,10 +106,12 @@ export default class GameController implements IGameController {
         // Подсвечиваем зеленым и меняем курсор
         this.gamePlay.deselectCell(this.selectedCellIndex);
         this.gamePlay.selectCell(index, CellHighlight.Green);
-        this.selectedCellIndex = index;
         this.gamePlay.setCursor(Cursor.Pointer);
 
-        // TODO: Реализовать логику перемещения персонажа
+        // Реализуем логику перемещения персонажа
+        if (selectedCharacterPosition) {
+          this.moveCharacterToCell(selectedCharacterPosition, index);
+        }
         
         return;
       }
@@ -328,5 +330,36 @@ export default class GameController implements IGameController {
     }
 
     return cellsInRange;
+  }
+
+  /**
+   * Перемещает персонажа на указанную клетку.
+   * @param {PositionedCharacter} characterPosition - персонаж с текущей позицией
+   * @param {number} targetIndex - индекс клетки для перемещения
+   */
+  private moveCharacterToCell(characterPosition: PositionedCharacter, targetIndex: number): void {
+    // Создаем новый PositionedCharacter с обновленной позицией
+    const updatedPositionedCharacter = new PositionedCharacter(
+      characterPosition.character,
+      targetIndex
+    );
+
+    // Обновляем массив positionedCharacters, заменяя старую позицию новой
+    this.positionedCharacters = this.positionedCharacters.map((pc) =>
+      pc === characterPosition ? updatedPositionedCharacter : pc
+    );
+
+    // Обновляем отображение персонажей
+    this.gamePlay.redrawPositions(this.positionedCharacters);
+
+    // Убираем выделения ячеек
+    this.gamePlay.deselectCell(this.selectedCellIndex!);
+    this.gamePlay.deselectCell(targetIndex);
+
+    // Обновляем выбранную ячейку на новую позицию
+    this.selectedCellIndex = targetIndex;
+
+    // Передаем ход
+    this.gameState = GameState.from({ isPlayerTurn: false });
   }
 }
