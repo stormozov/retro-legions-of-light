@@ -356,8 +356,8 @@ export default class GameController implements IGameController {
     this.gamePlay.deselectCell(this.selectedCellIndex!);
     this.gamePlay.deselectCell(targetIndex);
 
-    // Обновляем выбранную ячейку на новую позицию
-    this.selectedCellIndex = targetIndex;
+    // Очищаем выбранную ячейку после перемещения
+    this.selectedCellIndex = null;
 
     // Передаем ход
     this.gameState = GameState.from({ isPlayerTurn: false });

@@ -131,7 +131,7 @@ describe('Класс GameController', () => {
       expect(gamePlay.deselectCell).toHaveBeenCalledWith(4);
       expect(gamePlay.selectCell).toHaveBeenCalledWith(5, CellHighlight.Green);
       expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Pointer);
-      expect(gameController['selectedCellIndex']).toBe(5);
+      expect(gameController['selectedCellIndex']).toBe(null);
     });
 
     it(`выбран персонаж и клик на доступную для атаки клетку; 
@@ -385,24 +385,18 @@ describe('Класс GameController', () => {
     });
   });
 
-  describe('Метод moveCharacterToCell', () => {
-    let gamePlay: GamePlay;
-    let stateService: any;
-    let gameController: GameController;
+  describe('Метод moveCharacterToCell()', () => {
     let playerCharacter: Bowman;
     let playerPositioned: PositionedCharacter;
 
     beforeEach(() => {
-      gamePlay = new GamePlay();
-      gameController = new GameController(gamePlay, stateService);
-
       playerCharacter = new Bowman();
       playerPositioned = new PositionedCharacter(playerCharacter, 1);
       gameController['positionedCharacters'] = [playerPositioned];
       gameController['selectedCellIndex'] = 1;
       gameController['gameState'] = GameState.from({ isPlayerTurn: true });
 
-      // Mock gamePlay methods
+      // Мокаем методы класса GamePlay
       gamePlay.redrawPositions = jest.fn();
       gamePlay.deselectCell = jest.fn();
     });
@@ -418,16 +412,16 @@ describe('Класс GameController', () => {
       (gameController as any).moveCharacterToCell(playerPositioned, newPosition);
 
       // Проверяем, что старый PositionedCharacter заменен
-      const foundOld = gameController['positionedCharacters'].find(pc => pc === playerPositioned);
+      const foundOld = gameController['positionedCharacters'].find((pc) => pc === playerPositioned);
       expect(foundOld).toBeUndefined();
 
       // Проверяем, что новый PositionedCharacter добавлен
-      const foundNew = gameController['positionedCharacters'].find(pc => pc.position === newPosition);
+      const foundNew = gameController['positionedCharacters'].find((pc) => pc.position === newPosition);
       expect(foundNew).toBeDefined();
       expect(foundNew!.position).toBe(newPosition);
 
       // Проверяем, что другой PositionedCharacter остался без изменений
-      const foundAnother = gameController['positionedCharacters'].find(pc => pc === anotherPositioned);
+      const foundAnother = gameController['positionedCharacters'].find((pc) => pc === anotherPositioned);
       expect(foundAnother).toBeDefined();
     });
   });
