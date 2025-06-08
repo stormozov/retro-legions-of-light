@@ -1,5 +1,5 @@
 import GameStateService from '../services/GameStateService';
-import { CharacterType, Cursor, Theme } from '../types/enums';
+import { CharacterType, Cursor, Theme, CellHighlight } from '../types/enums';
 import { IGameController } from '../types/interfaces';
 import { findCharacterByIndex, formatCharacterInfo, isPlayerCharacter } from '../utils/utils';
 import GamePlay from './GamePlay';
@@ -105,7 +105,7 @@ export default class GameController implements IGameController {
       if ( availableMoveCells.includes(index) ) {
         // Подсвечиваем зеленым и меняем курсор
         this.gamePlay.deselectCell(this.selectedCellIndex);
-        this.gamePlay.selectCell(index, 'green');
+        this.gamePlay.selectCell(index, CellHighlight.Green);
         this.selectedCellIndex = index;
         this.gamePlay.setCursor(Cursor.Pointer);
 
@@ -119,7 +119,7 @@ export default class GameController implements IGameController {
       if ( availableAttackCells.includes(index) ) {
         // Подсвечиваем красным и меняем курсор
         this.gamePlay.deselectCell(this.selectedCellIndex);
-        this.gamePlay.selectCell(index, 'red');
+        this.gamePlay.selectCell(index, CellHighlight.Red);
         this.selectedCellIndex = null;
         this.gamePlay.setCursor(Cursor.Crosshair);
         
@@ -186,7 +186,7 @@ export default class GameController implements IGameController {
     const availableMoveCells = this.getAvailableMoveCells(this.selectedCellIndex!);
     if ( availableMoveCells.includes(index) ) {
       this.gamePlay.setCursor(Cursor.Pointer);
-      this.gamePlay.selectCell(index, 'green');
+      this.gamePlay.selectCell(index, CellHighlight.Green);
 
       return;
     }
@@ -195,7 +195,7 @@ export default class GameController implements IGameController {
     const availableAttackCells = this.getAvailableAttackCells(this.selectedCellIndex!);
     if ( availableAttackCells.includes(index) ) {
       this.gamePlay.setCursor(Cursor.Crosshair);
-      this.gamePlay.selectCell(index, 'red');
+      this.gamePlay.selectCell(index, CellHighlight.Red);
 
       return;
     }

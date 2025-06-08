@@ -50,3 +50,14 @@ export enum Cursor {
   Crosshair = 'crosshair',
   NotAllowed = 'not-allowed',
 }
+
+/**
+ * Перечисление цветов выделения ячеек.
+ *
+ * @enum {string}
+ */
+export enum CellHighlight {
+  Yellow = 'yellow',
+  Green = 'green',
+  Red = 'red',
+}

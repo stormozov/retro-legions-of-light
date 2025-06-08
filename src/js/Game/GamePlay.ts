@@ -4,7 +4,7 @@ import {
   GameActionListener,
 } from '../types/types';
 import PositionedCharacter from './PositionedCharacter';
-import { Cursor } from '../types/enums';
+import { CellHighlight, Cursor } from '../types/enums';
 
 export default class GamePlay {
   private boardSize: number;
@@ -213,7 +213,7 @@ export default class GamePlay {
     alert(message);
   }
 
-  selectCell(index: number, color: string = 'yellow'): void {
+  selectCell(index: number, color: CellHighlight = CellHighlight.Yellow): void {
     this.deselectCell(index);
     this.cells[index].classList.add('selected', `selected-${color}`);
   }

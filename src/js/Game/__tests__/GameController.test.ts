@@ -1,6 +1,6 @@
 import { Demon } from '../../Entities/Enemies';
 import { Bowman } from '../../Entities/Heroes';
-import { Theme, Cursor, CharacterType } from '../../types/enums';
+import { Theme, Cursor, CharacterType, CellHighlight } from '../../types/enums';
 import { formatCharacterInfo } from '../../utils/utils';
 import GameController from '../GameController';
 import GamePlay from '../GamePlay';
@@ -129,7 +129,7 @@ describe('Класс GameController', () => {
       gameController.onCellClick(5);
 
       expect(gamePlay.deselectCell).toHaveBeenCalledWith(4);
-      expect(gamePlay.selectCell).toHaveBeenCalledWith(5, 'green');
+      expect(gamePlay.selectCell).toHaveBeenCalledWith(5, CellHighlight.Green);
       expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Pointer);
       expect(gameController['selectedCellIndex']).toBe(5);
     });
@@ -152,7 +152,7 @@ describe('Класс GameController', () => {
       gameController.onCellClick(7);
 
       expect(gamePlay.deselectCell).toHaveBeenCalledWith(6);
-      expect(gamePlay.selectCell).toHaveBeenCalledWith(7, 'red');
+      expect(gamePlay.selectCell).toHaveBeenCalledWith(7, CellHighlight.Red);
       expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Crosshair);
       expect(gameController['selectedCellIndex']).toBeNull();
     });
@@ -288,7 +288,7 @@ describe('Класс GameController', () => {
         gameController.onCellEnter(16);
 
         expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Crosshair);
-        expect(gamePlay.selectCell).toHaveBeenCalledWith(16, 'red');
+        expect(gamePlay.selectCell).toHaveBeenCalledWith(16, CellHighlight.Red);
       });
     });
   });
