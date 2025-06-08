@@ -64,7 +64,7 @@ export default class GameController implements IGameController {
    * @example
    * onCellClick(5); // Выбирает ячейку с индексом 5, если возможно
    */
-  onCellClick(index: number): void {
+  async onCellClick(index: number): Promise<void> {
     const characterPosition = findCharacterByIndex(this.positionedCharacters, index);
 
     // Если ход компьютера, показываем ошибку
@@ -122,11 +122,17 @@ export default class GameController implements IGameController {
         // Подсвечиваем красным и меняем курсор
         this.gamePlay.deselectCell(this.selectedCellIndex);
         this.gamePlay.selectCell(index, CellHighlight.Red);
-        this.selectedCellIndex = null;
         this.gamePlay.setCursor(Cursor.Crosshair);
-        
-        // TODO: Реализовать логику атаки
-        
+
+        const attackerPosition = findCharacterByIndex(this.positionedCharacters, this.selectedCellIndex!);
+        const targetPosition = findCharacterByIndex(this.positionedCharacters, index);
+
+        if ( attackerPosition && targetPosition ) {
+          await this.performAttack(attackerPosition, targetPosition);
+        } else {
+          GamePlay.showError('Ошибка при атаке: персонаж не найден');
+        }
+
         return;
       }
 
@@ -360,6 +366,32 @@ export default class GameController implements IGameController {
     this.selectedCellIndex = null;
 
     // Передаем ход
+    this.gameState = GameState.from({ isPlayerTurn: false });
+  }
+
+  /**
+   * Выполняет атаку между двумя персонажами.
+   *
+   * @param {PositionedCharacter} attackerPosition - Позиция атакующего персонажа.
+   * @param {PositionedCharacter} targetPosition - Позиция защищающегося персонажа.
+   * 
+   * @returns {Promise<void>} Promise, который разрешается после выполнения атаки.
+   */
+  private async performAttack(
+    attackerPosition: PositionedCharacter,
+    targetPosition: PositionedCharacter
+  ): Promise<void> {
+    const attacker = attackerPosition.character;
+    const target = targetPosition.character;
+
+    const damage = Math.max(attacker.attack - target.defense, attacker.attack * 0.1);
+    target.health -= damage;
+
+    await this.gamePlay.showDamage(targetPosition.position, damage);
+    this.gamePlay.redrawPositions(this.positionedCharacters);
+    this.gamePlay.deselectCell(targetPosition.position);
+
+    this.selectedCellIndex = null;
     this.gameState = GameState.from({ isPlayerTurn: false });
   }
 }

@@ -17,7 +17,7 @@ export default class TeamPositioner {
   static generateAndPositionTeams(): PositionedCharacter[] {
     // Подготавливаем параметры
     const boardSize = 8;
-    const playerColumns = [0, 1];
+    const playerColumns = [5];
     const opponentColumns = [6, 7];
     const maxLevel = 4;
     const playerCharacterCount = 2;

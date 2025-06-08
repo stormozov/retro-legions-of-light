@@ -154,7 +154,7 @@ describe('Класс GameController', () => {
       expect(gamePlay.deselectCell).toHaveBeenCalledWith(6);
       expect(gamePlay.selectCell).toHaveBeenCalledWith(7, CellHighlight.Red);
       expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Crosshair);
-      expect(gameController['selectedCellIndex']).toBeNull();
+      expect(gameController['selectedCellIndex']).toBe(6);
     });
 
     it(`выбран персонаж и клик на недопустимую клетку; 
