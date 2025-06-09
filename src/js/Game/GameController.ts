@@ -423,7 +423,7 @@ export default class GameController implements IGameController {
    * Выполняет ход компьютера, атакуя слабых противников в первую очередь.
    */
   private async computerTurn(): Promise<void> {
-    if (this.isComputerTurnInProgress) return;
+    if ( this.isComputerTurnInProgress ) return;
     this.isComputerTurnInProgress = true;
 
     // Получаем всех персонажей компьютера
@@ -432,21 +432,40 @@ export default class GameController implements IGameController {
     // Получаем всех персонажей игрока
     const playerCharacters = this.positionedCharacters.filter((pc) => isPlayerCharacter(pc));
 
-    // Перебираем всех персонажей компьютера
-    for ( const attackerPosition of computerCharacters ) {
-      // Получаем доступные для атаки клетки для данного персонажа компьютера
-      const attackableCells = this.getAvailableAttackCells(attackerPosition.position);
+    // Фильтруем персонажей компьютера, которые могут атаковать
+    const attackersWithTargets = computerCharacters
+      .map((attacker) => {
+        const attackCells = this.getAvailableAttackCells(attacker.position);
+        const attackTargets = playerCharacters.filter((pc) => attackCells.includes(pc.position));
+        return { attacker, attackTargets };
+      })
+      .filter(({ attackTargets }) => attackTargets.length > 0);
 
-      // Фильтруем персонажей игрока, которые находятся в зоне атаки
-      const attackableTargets = playerCharacters.filter((pc) => attackableCells.includes(pc.position));
+    if ( attackersWithTargets.length > 0 ) {
+      // Выбираем атакующего, который может атаковать самого слабого персонажа
+      attackersWithTargets.sort((a, b) => {
+        const aMinHealth = Math.min(...a.attackTargets.map((t) => t.character.health));
+        const bMinHealth = Math.min(...b.attackTargets.map((t) => t.character.health));
+        return aMinHealth - bMinHealth;
+      });
 
-      if ( attackableTargets.length === 0 ) {
-        // Нет целей для атаки, пытаемся подвинуться ближе к игроку
+      const { attacker, attackTargets } = attackersWithTargets[0];
+      attackTargets.sort((a, b) => a.character.health - b.character.health);
+      const targetPosition = attackTargets[0];
+
+      // Выполняем атаку
+      await this.performAttack(attacker, targetPosition);
+    } else {
+      // Нет целей для атаки, пытаемся подвинуться ближе к игроку
+      // Выбираем персонажа, который может подвинуться ближе к ближайшему игроку
+      let bestMove = null;
+      let bestDistance = Infinity;
+      let bestAttacker = null;
+      let bestTargetMoveCell = null;
+
+      for ( const attackerPosition of computerCharacters ) {
         const moveCells = this.getAvailableMoveCells(attackerPosition.position);
-        if (moveCells.length === 0) {
-          // Нет куда двигаться, пропускаем ход
-          break;
-        }
+        if ( moveCells.length === 0 ) continue;
 
         // Находим ближайшего игрока
         const nearestPlayer = playerCharacters.reduce((nearest, pc) => {
@@ -458,31 +477,25 @@ export default class GameController implements IGameController {
         // Выбираем клетку для движения, которая ближе всего к игроку
         let targetMoveCell = moveCells[0];
         let minDistance = Math.abs(moveCells[0] - nearestPlayer.position);
-        for (const cell of moveCells) {
+        for ( const cell of moveCells ) {
           const distance = Math.abs(cell - nearestPlayer.position);
-          if (distance < minDistance) {
+          if ( distance < minDistance ) {
             minDistance = distance;
             targetMoveCell = cell;
           }
         }
 
-        // Двигаемся на выбранную клетку
-        await this.moveCharacterToCell(attackerPosition, targetMoveCell);
-
-        // После движения завершаем ход компьютера
-        break;
+        if  ( minDistance < bestDistance ) {
+          bestDistance = minDistance;
+          bestMove = targetMoveCell;
+          bestAttacker = attackerPosition;
+          bestTargetMoveCell = targetMoveCell;
+        }
       }
 
-      // Сортируем цели по здоровью (слабые в первую очередь)
-      attackableTargets.sort((a, b) => a.character.health - b.character.health);
-
-      const targetPosition = attackableTargets[0];
-
-      // Выполняем атаку
-      await this.performAttack(attackerPosition, targetPosition);
-
-      // После успешной атаки завершаем ход компьютера
-      break;
+      if ( bestAttacker && bestTargetMoveCell !== null ) {
+        await this.moveCharacterToCell(bestAttacker, bestTargetMoveCell);
+      }
     }
 
     // После хода компьютера передаем ход игроку
