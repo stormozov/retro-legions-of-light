@@ -1,5 +1,5 @@
 import GameStateService from '../services/GameStateService';
-import { CharacterType, Cursor, Theme, CellHighlight } from '../types/enums';
+import { CellHighlight, CharacterType, Cursor, Theme } from '../types/enums';
 import { IGameController } from '../types/interfaces';
 import { findCharacterByIndex, formatCharacterInfo, isPlayerCharacter } from '../utils/utils';
 import GamePlay from './GamePlay';
@@ -12,7 +12,8 @@ export default class GameController implements IGameController {
   private stateService: GameStateService;
   private positionedCharacters: PositionedCharacter[] = [];
   private selectedCellIndex: number | null = null;
-  private gameState = GameState.from({ isPlayerTurn: true });
+  private gameState = new GameState();
+  private isComputerTurnInProgress: boolean = false;
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
@@ -110,7 +111,7 @@ export default class GameController implements IGameController {
 
         // Реализуем логику перемещения персонажа
         if (selectedCharacterPosition) {
-          this.moveCharacterToCell(selectedCharacterPosition, index);
+          await this.moveCharacterToCell(selectedCharacterPosition, index);
         }
         
         return;
@@ -127,10 +128,14 @@ export default class GameController implements IGameController {
         const attackerPosition = findCharacterByIndex(this.positionedCharacters, this.selectedCellIndex!);
         const targetPosition = findCharacterByIndex(this.positionedCharacters, index);
 
-        if ( attackerPosition && targetPosition ) {
+        if ( 
+          attackerPosition 
+          && targetPosition 
+          && isPlayerCharacter(attackerPosition) !== isPlayerCharacter(targetPosition) 
+        ) {
           await this.performAttack(attackerPosition, targetPosition);
         } else {
-          GamePlay.showError('Ошибка при атаке: персонаж не найден');
+          GamePlay.showError('Ошибка при атаке: персонаж не найден или недопустимый цель');
         }
 
         return;
@@ -242,8 +247,9 @@ export default class GameController implements IGameController {
     if (!characterPosition) return [];
 
     const maxDistance = this.getAttackDistance(characterPosition.character.type);
+    const isPlayerAttacker = isPlayerCharacter(characterPosition);
 
-    return this.getCellsInRange(index, maxDistance, false);
+    return this.getCellsInRange(index, maxDistance, false, isPlayerAttacker);
   }
 
   /**
@@ -294,10 +300,16 @@ export default class GameController implements IGameController {
    * @param {number} index - индекс клетки.
    * @param {number} maxDistance - максимальное расстояние.
    * @param {boolean} allowMove - разрешено ли перемещение (true) или атака (false).
+   * @param {boolean} isPlayerAttacker - является ли атакующий персонаж игроком.
    * 
    * @returns {number[]} - массив индексов клеток.
    */
-  private getCellsInRange(index: number, maxDistance: number, allowMove: boolean): number[] {
+  private getCellsInRange(
+    index: number, 
+    maxDistance: number, 
+    allowMove: boolean, 
+    isPlayerAttacker?: boolean
+  ): number[] {
     const boardSize = 8;
     const cellsInRange: number[] = [];
 
@@ -328,7 +340,7 @@ export default class GameController implements IGameController {
         } else {
           // Для атаки ячейка должна быть занята вражеским персонажем
           const enemyCharacter = findCharacterByIndex(this.positionedCharacters, cellIndex);
-          if ( enemyCharacter && !isPlayerCharacter(enemyCharacter) ) {
+          if ( enemyCharacter && isPlayerCharacter(enemyCharacter) !== isPlayerAttacker ) {
             cellsInRange.push(cellIndex);
           }
         }
@@ -343,7 +355,7 @@ export default class GameController implements IGameController {
    * @param {PositionedCharacter} characterPosition - персонаж с текущей позицией
    * @param {number} targetIndex - индекс клетки для перемещения
    */
-  private moveCharacterToCell(characterPosition: PositionedCharacter, targetIndex: number): void {
+  private async moveCharacterToCell(characterPosition: PositionedCharacter, targetIndex: number): Promise<void> {
     // Создаем новый PositionedCharacter с обновленной позицией
     const updatedPositionedCharacter = new PositionedCharacter(
       characterPosition.character,
@@ -359,14 +371,21 @@ export default class GameController implements IGameController {
     this.gamePlay.redrawPositions(this.positionedCharacters);
 
     // Убираем выделения ячеек
-    this.gamePlay.deselectCell(this.selectedCellIndex!);
-    this.gamePlay.deselectCell(targetIndex);
+    if (this.selectedCellIndex !== null && this.selectedCellIndex >= 0 && this.selectedCellIndex < 64) {
+      this.gamePlay.deselectCell(this.selectedCellIndex);
+    }
+    if (targetIndex >= 0 && targetIndex < 64) {
+      this.gamePlay.deselectCell(targetIndex);
+    }
 
     // Очищаем выбранную ячейку после перемещения
     this.selectedCellIndex = null;
 
     // Передаем ход
-    this.gameState = GameState.from({ isPlayerTurn: false });
+    this.gameState.isPlayerTurn = false;
+
+    // Запускаем ход компьютера
+    await this.computerTurn();
   }
 
   /**
@@ -394,6 +413,80 @@ export default class GameController implements IGameController {
     this.gamePlay.deselectCell(targetPosition.position);
 
     this.selectedCellIndex = null;
-    this.gameState = GameState.from({ isPlayerTurn: false });
+    this.gameState.isPlayerTurn = false;
+
+    // Запускаем ход компьютера
+    await this.computerTurn();
+  }
+
+  /**
+   * Выполняет ход компьютера, атакуя слабых противников в первую очередь.
+   */
+  private async computerTurn(): Promise<void> {
+    if (this.isComputerTurnInProgress) return;
+    this.isComputerTurnInProgress = true;
+
+    // Получаем всех персонажей компьютера
+    const computerCharacters = this.positionedCharacters.filter((pc) => !isPlayerCharacter(pc));
+
+    // Получаем всех персонажей игрока
+    const playerCharacters = this.positionedCharacters.filter((pc) => isPlayerCharacter(pc));
+
+    // Перебираем всех персонажей компьютера
+    for ( const attackerPosition of computerCharacters ) {
+      // Получаем доступные для атаки клетки для данного персонажа компьютера
+      const attackableCells = this.getAvailableAttackCells(attackerPosition.position);
+
+      // Фильтруем персонажей игрока, которые находятся в зоне атаки
+      const attackableTargets = playerCharacters.filter((pc) => attackableCells.includes(pc.position));
+
+      if ( attackableTargets.length === 0 ) {
+        // Нет целей для атаки, пытаемся подвинуться ближе к игроку
+        const moveCells = this.getAvailableMoveCells(attackerPosition.position);
+        if (moveCells.length === 0) {
+          // Нет куда двигаться, пропускаем ход
+          break;
+        }
+
+        // Находим ближайшего игрока
+        const nearestPlayer = playerCharacters.reduce((nearest, pc) => {
+          const distNearest = Math.abs(nearest.position - attackerPosition.position);
+          const distCurrent = Math.abs(pc.position - attackerPosition.position);
+          return distCurrent < distNearest ? pc : nearest;
+        }, playerCharacters[0]);
+
+        // Выбираем клетку для движения, которая ближе всего к игроку
+        let targetMoveCell = moveCells[0];
+        let minDistance = Math.abs(moveCells[0] - nearestPlayer.position);
+        for (const cell of moveCells) {
+          const distance = Math.abs(cell - nearestPlayer.position);
+          if (distance < minDistance) {
+            minDistance = distance;
+            targetMoveCell = cell;
+          }
+        }
+
+        // Двигаемся на выбранную клетку
+        await this.moveCharacterToCell(attackerPosition, targetMoveCell);
+
+        // После движения завершаем ход компьютера
+        break;
+      }
+
+      // Сортируем цели по здоровью (слабые в первую очередь)
+      attackableTargets.sort((a, b) => a.character.health - b.character.health);
+
+      const targetPosition = attackableTargets[0];
+
+      // Выполняем атаку
+      await this.performAttack(attackerPosition, targetPosition);
+
+      // После успешной атаки завершаем ход компьютера
+      break;
+    }
+
+    // После хода компьютера передаем ход игроку
+    this.gameState.isPlayerTurn = true;
+    this.isComputerTurnInProgress = false;
   }
 }
