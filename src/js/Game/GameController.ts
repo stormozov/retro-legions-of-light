@@ -1,3 +1,4 @@
+import Character from '../Entities/Character';
 import GameStateService from '../services/GameStateService';
 import { CellHighlight, CharacterType, Cursor, Theme } from '../types/enums';
 import { IGameController } from '../types/interfaces';
@@ -14,6 +15,7 @@ export default class GameController implements IGameController {
   private selectedCellIndex: number | null = null;
   private gameState = new GameState();
   private isComputerTurnInProgress: boolean = false;
+  private currentTheme: Theme = Theme.Prairie;
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
@@ -22,7 +24,8 @@ export default class GameController implements IGameController {
 
   init(): void {
     // Отрисовываем доску и кнопки управления.
-    this.gamePlay.drawUi(Theme.Prairie);
+    this.currentTheme = Theme.Prairie;
+    this.gamePlay.drawUi(this.currentTheme);
 
     // Генерируем и отрисовываем расположение команд на доске.
     this.positionedCharacters = TeamPositioner.generateAndPositionTeams();
@@ -517,5 +520,92 @@ export default class GameController implements IGameController {
       (pc) => pc !== targetPosition
     );
     this.gamePlay.redrawPositions(this.positionedCharacters);
+
+    // Check if enemy team is empty after removal
+    const enemyCharacters = this.positionedCharacters.filter((pc) => !isPlayerCharacter(pc));
+    if (enemyCharacters.length === 0) {
+      this.levelUpPlayerCharacters();
+      this.advanceToNextTheme();
+      this.startNewLevel();
+    }
+  }
+
+  /**
+   * Увеличивает уровень указанного персонажа и обновляет его характеристики.
+   * @param {Character} character - Персонаж, уровень которого нужно увеличить.
+   */
+  private levelUpCharacter(character: Character): void {
+    // Увеличиваем уровень персонажа на 1
+    character.level += 1;
+
+    // Обновляем здоровье персонажа, но не более 100
+    character.health = Math.min(character.level + 80, 100);
+
+    // Обновляем атаку и защиту персонажа по формуле:
+    // Math.max(attackBefore, attackBefore * (80 + life) / 100)
+    character.attack = Math.max(character.attack, character.attack * (80 + character.health) / 100);
+    character.defense = Math.max(character.defense, character.defense * (80 + character.health) / 100);
+  }
+
+  /**
+   * Увеличивает уровень персонажей игрока.
+   */
+  private levelUpPlayerCharacters(): void {
+    for (const pc of this.positionedCharacters) {
+      if (isPlayerCharacter(pc)) {
+        this.levelUpCharacter(pc.character);
+      }
+    }
+  }
+
+  /**
+   * Переходит к следующей теме карты.
+   */
+  private advanceToNextTheme(): void {
+    switch (this.currentTheme) {
+      case Theme.Prairie:
+        this.currentTheme = Theme.Desert;
+        break;
+      case Theme.Desert:
+        this.currentTheme = Theme.Arctic;
+        break;
+      case Theme.Arctic:
+        this.currentTheme = Theme.Mountain;
+        break;
+      case Theme.Mountain:
+      default:
+        this.currentTheme = Theme.Prairie;
+        break;
+    }
+  }
+
+  /**
+   * Начинает новый уровень игры.
+   * 
+   * Создает новую команду противника и объединяет ее с текущей командой игрока.
+   * Затем отрисовывает новую тему карты и обновляет позиции персонажей на карте.
+   */
+  private startNewLevel(): void {
+    // Сохраняем текущую команду игрока (оставшихся в живых персонажей)
+    const currentPlayerTeam = this.positionedCharacters.filter(pc => isPlayerCharacter(pc));
+
+    // Позиционируем существующую команду игрока в колонках 0 и 1
+    const repositionedPlayerTeam = TeamPositioner.repositionExistingTeam(
+      currentPlayerTeam,
+    );
+
+    // Генерируем и позиционируем новую команду противника в колонках 6 и 7
+    const newOpponentTeam = TeamPositioner.generateAndPositionOpponentTeam();
+
+    // Объединяем обе команды
+    this.positionedCharacters = [...repositionedPlayerTeam, ...newOpponentTeam];
+
+    // Обновляем UI
+    this.gamePlay.drawUi(this.currentTheme);
+    this.gamePlay.redrawPositions(this.positionedCharacters);
+
+    // Сбрасываем состояние игры
+    this.gameState.isPlayerTurn = true;
+    this.selectedCellIndex = null;
   }
 }
