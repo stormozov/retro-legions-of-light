@@ -16,6 +16,7 @@ export default class GameController implements IGameController {
   private gameState = new GameState();
   private isComputerTurnInProgress: boolean = false;
   private currentTheme: Theme = Theme.Prairie;
+  private gameOver: boolean = false;
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
@@ -36,6 +37,12 @@ export default class GameController implements IGameController {
 
     // Подписываемся на клики по ячейкам с правильным this
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+
+    // Подписываемся на кнопку "New Game"
+    this.gamePlay.addNewGameListener(this.onNewGame.bind(this));
+
+    // Сброс gameOver при инициализации
+    this.gameOver = false;
   }
 
   /**
@@ -69,6 +76,9 @@ export default class GameController implements IGameController {
    * onCellClick(5); // Выбирает ячейку с индексом 5, если возможно
    */
   async onCellClick(index: number): Promise<void> {
+    // Игровое поле заблокировано, клики игнорируются
+    if (this.gameOver) return;
+
     const characterPosition = findCharacterByIndex(this.positionedCharacters, index);
 
     // Если ход компьютера, показываем ошибку
@@ -86,13 +96,6 @@ export default class GameController implements IGameController {
         this.positionedCharacters, 
         this.selectedCellIndex
       );
-
-      // if ( !selectedCharacterPosition ) {
-      //   this.gamePlay.deselectCell(this.selectedCellIndex);
-      //   this.selectedCellIndex = null;
-
-      //   return;
-      // }
 
       // Если клик на другого персонажа игрока - смена выбора
       if ( characterPosition && isPlayerCharacter(characterPosition) ) {
@@ -146,7 +149,6 @@ export default class GameController implements IGameController {
 
       // Недопустимое действие
       this.gamePlay.setCursor(Cursor.NotAllowed);
-      GamePlay.showError('Недопустимое действие');
       return;
     }
 
@@ -491,7 +493,7 @@ export default class GameController implements IGameController {
           }
         }
 
-        if  ( minDistance < bestDistance ) {
+        if ( minDistance < bestDistance ) {
           bestDistance = minDistance;
           bestMove = targetMoveCell;
           bestAttacker = attackerPosition;
@@ -521,12 +523,19 @@ export default class GameController implements IGameController {
     );
     this.gamePlay.redrawPositions(this.positionedCharacters);
 
-    // Check if enemy team is empty after removal
+    // Если персонажи команды компьютера закончились, переходим на новый уровень.
     const enemyCharacters = this.positionedCharacters.filter((pc) => !isPlayerCharacter(pc));
     if (enemyCharacters.length === 0) {
       this.levelUpPlayerCharacters();
       this.advanceToNextTheme();
       this.startNewLevel();
+    }
+
+    // Если персонажи игрока закончились, игра окончена.
+    const playerCharacters = this.positionedCharacters.filter((pc) => isPlayerCharacter(pc));
+    if (playerCharacters.length === 0) {
+      this.gameOver = true;
+      GamePlay.showMessage('Вы проиграли! Игра окончена.');
     }
   }
 
@@ -607,5 +616,15 @@ export default class GameController implements IGameController {
     // Сбрасываем состояние игры
     this.gameState.isPlayerTurn = true;
     this.selectedCellIndex = null;
+    this.gameOver = false;
+  }
+
+  /**
+   * Обрабатывает нажатие кнопки "Новая игра".
+   * 
+   * При нажатии кнопки "Новая игра" перезагружает страницу.
+   */
+  private onNewGame(): void {
+    window.location.reload();
   }
 }

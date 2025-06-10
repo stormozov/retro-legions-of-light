@@ -173,7 +173,6 @@ describe('Класс GameController', () => {
       gameController.onCellClick(9);
 
       expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.NotAllowed);
-      expect(GamePlay.showError).toHaveBeenCalledWith('Недопустимое действие');
     });
   });
 
