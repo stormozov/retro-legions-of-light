@@ -410,6 +410,9 @@ export default class GameController implements IGameController {
     await this.gamePlay.animateHealthChange(targetPosition.position, oldHealth, target.health);
     await this.gamePlay.showDamage(targetPosition.position, damage);
 
+    // Если здоровье персонажа достигло нуля, удаляем его из массива PositionedCharacters
+    if (target.health <= 0) this.removeCharacter(targetPosition);
+
     this.gamePlay.deselectCell(targetPosition.position);
 
     this.selectedCellIndex = null;
@@ -501,5 +504,18 @@ export default class GameController implements IGameController {
     // После хода компьютера передаем ход игроку
     this.gameState.isPlayerTurn = true;
     this.isComputerTurnInProgress = false;
+  }
+
+  /**
+   * Метод удаляет указанного персонажа из списка позиционированных персонажей 
+   * и обновляет отображение на игровом поле.
+   * 
+   * @param {PositionedCharacter} targetPosition - Позиция удаляемого персонажа.
+   */
+  private removeCharacter(targetPosition: PositionedCharacter): void {
+    this.positionedCharacters = this.positionedCharacters.filter(
+      (pc) => pc !== targetPosition
+    );
+    this.gamePlay.redrawPositions(this.positionedCharacters);
   }
 }
