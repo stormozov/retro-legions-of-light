@@ -94,8 +94,6 @@ export default class GamePlay {
   redrawPositions(positions: PositionedCharacter[]): void {
     for ( const cell of this.cells ) cell.innerHTML = '';
 
-    const fragment = document.createDocumentFragment();
-
     for ( const position of positions ) {
       const cellEl = this.boardEl!.children[position.position] as HTMLDivElement;
       const charEl = document.createElement('div');
@@ -113,9 +111,8 @@ export default class GamePlay {
 
       healthEl.appendChild(healthIndicatorEl);
       charEl.appendChild(healthEl);
-      fragment.appendChild(charEl);
 
-      cellEl.appendChild(fragment);
+      cellEl.appendChild(charEl);
     }
   }
 

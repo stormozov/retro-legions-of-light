@@ -1,4 +1,5 @@
 import GameState from '../Game/GameState';
+import { GameStateNotFoundError, GameStateLoadError } from '../errors/GameStateErrors';
 
 /**
 * Класс GameStateService управляет сохранением и загрузкой состояния игры.
@@ -15,23 +16,31 @@ export default class GameStateService {
   }
 
   /**
-   * Сохраняет состояние игры.
+   * Сохраняет состояние игры в localStorage.
    * @param {GameState} state - Состояние игры для сохранения.
    */
   save(state: GameState): void {
-    this.storage.setItem('state', JSON.stringify(state));
+    this.storage.setItem('state', JSON.stringify(state.toObject()));
   }
 
   /**
-   * Загружает состояние игры.
-   * @returns {GameState} - Загруженное состояние игры.
-   * @throws {Error} - Если не удалось загрузить состояние игры.
+   * Загружает состояние игры из localStorage.
+   * 
+   * @returns {GameState} - Загруженное состояние игры из localStorage в формате GameState.
+   * 
+   * @throws {GameStateNotFoundError} - Если состояние игры не найдено в localStorage.
+   * @throws {GameStateLoadError} - Если состояние игры не может быть загружено из localStorage.
    */
   load(): GameState {
     try {
-      return JSON.parse(this.storage.getItem('state'));
+      const stateString = this.storage.getItem('state');
+      if (!stateString) throw new GameStateNotFoundError();
+      const parsed = JSON.parse(stateString);
+      
+      return GameState.from(parsed);
     } catch (e) {
-      throw new Error('Не удалось загрузить состояние игры');
+      if ( e instanceof GameStateNotFoundError ) throw e;
+      throw new GameStateLoadError();
     }
   }
 }

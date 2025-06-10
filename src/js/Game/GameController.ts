@@ -43,6 +43,10 @@ export default class GameController implements IGameController {
 
     // Сброс gameOver при инициализации
     this.gameOver = false;
+
+    // Add listeners for save and load buttons
+    this.gamePlay.addSaveGameListener(this.onSaveGame.bind(this));
+    this.gamePlay.addLoadGameListener(this.onLoadGame.bind(this));
   }
 
   /**
@@ -626,5 +630,49 @@ export default class GameController implements IGameController {
    */
   private onNewGame(): void {
     window.location.reload();
+  }
+
+  /**
+   * Обрабатывает нажатие кнопки "Сохранить игру".
+   * 
+   * При нажатии кнопки "Сохранить игру" сохраняет текущее состояние игры в localStorage.
+   * 
+   * При успешном сохранении сообщает пользователю, что игра успешно сохранена.
+   * При ошибке сообщает пользователю, что произошла ошибка при сохранении игры.
+   */
+  private onSaveGame(): void {
+    try {
+      this.gameState.positionedCharacters = this.positionedCharacters;
+      this.stateService.save(this.gameState);
+      GamePlay.showMessage('Игра успешно сохранена');
+    } catch (error) {
+      GamePlay.showError('Ошибка при сохранении игры');
+    }
+  }
+
+  /**
+   * Обрабатывает нажатие кнопки "Загрузить игру".
+   * 
+   * При нажатии кнопки "Загрузить игру" загружает состояние игры из localStorage.
+   * 
+   * При успешной загрузке сообщает пользователю, что игра успешно загружена.
+   * При ошибке сообщает пользователю, что произошла ошибка при загрузке игры.
+   */
+  private onLoadGame(): void {
+    try {
+      const loadedState = this.stateService.load();
+      this.gameState = loadedState;
+      this.positionedCharacters = loadedState.positionedCharacters;
+      this.currentTheme = loadedState.currentTheme;
+      this.gameOver = loadedState.gameOver;
+
+      this.gamePlay.drawUi(this.currentTheme);
+      this.gamePlay.redrawPositions(this.positionedCharacters);
+      this.showBriefInfo();
+
+      GamePlay.showMessage('Игра успешно загружена');
+    } catch (error) {
+      GamePlay.showError('Ошибка при загрузке игры');
+    }
   }
 }
