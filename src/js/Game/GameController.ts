@@ -1,4 +1,5 @@
 import Character from '../Entities/Character';
+import GameSavingService from '../services/GameSavingService';
 import GameStateService from '../services/GameStateService';
 import { CellHighlight, CharacterType, Cursor, Theme } from '../types/enums';
 import { IGameController } from '../types/interfaces';
@@ -10,7 +11,7 @@ import TeamPositioner from './TeamPositioner';
 
 export default class GameController implements IGameController {
   private gamePlay: GamePlay;
-  private stateService: GameStateService;
+  private savingService: GameSavingService;
   private positionedCharacters: PositionedCharacter[] = [];
   private selectedCellIndex: number | null = null;
   private gameState = new GameState();
@@ -20,7 +21,7 @@ export default class GameController implements IGameController {
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
-    this.stateService = stateService;
+    this.savingService = new GameSavingService(stateService, gamePlay);
   }
 
   init(): void {
@@ -44,9 +45,9 @@ export default class GameController implements IGameController {
     // Сброс gameOver при инициализации
     this.gameOver = false;
 
-    // Add listeners for save and load buttons
-    this.gamePlay.addSaveGameListener(this.onSaveGame.bind(this));
-    this.gamePlay.addLoadGameListener(this.onLoadGame.bind(this));
+    // Подписываемся на кнопку "Save Game" и "Load Game"
+    this.gamePlay.addSaveGameListener(this.handleSaveGame.bind(this));
+    this.gamePlay.addLoadGameListener(this.handleLoadGame.bind(this));
   }
 
   /**
@@ -640,14 +641,12 @@ export default class GameController implements IGameController {
    * При успешном сохранении сообщает пользователю, что игра успешно сохранена.
    * При ошибке сообщает пользователю, что произошла ошибка при сохранении игры.
    */
-  private onSaveGame(): void {
-    try {
-      this.gameState.positionedCharacters = this.positionedCharacters;
-      this.stateService.save(this.gameState);
-      GamePlay.showMessage('Игра успешно сохранена');
-    } catch (error) {
-      GamePlay.showError('Ошибка при сохранении игры');
-    }
+  private handleSaveGame(): void {
+    this.savingService.saveGame(
+      this.positionedCharacters,
+      this.currentTheme,
+      this.gameOver
+    );
   }
 
   /**
@@ -658,21 +657,13 @@ export default class GameController implements IGameController {
    * При успешной загрузке сообщает пользователю, что игра успешно загружена.
    * При ошибке сообщает пользователю, что произошла ошибка при загрузке игры.
    */
-  private onLoadGame(): void {
-    try {
-      const loadedState = this.stateService.load();
-      this.gameState = loadedState;
-      this.positionedCharacters = loadedState.positionedCharacters;
-      this.currentTheme = loadedState.currentTheme;
-      this.gameOver = loadedState.gameOver;
-
-      this.gamePlay.drawUi(this.currentTheme);
-      this.gamePlay.redrawPositions(this.positionedCharacters);
-      this.showBriefInfo();
-
-      GamePlay.showMessage('Игра успешно загружена');
-    } catch (error) {
-      GamePlay.showError('Ошибка при загрузке игры');
+  private handleLoadGame(): void {
+    const success = this.savingService.loadGame();
+    if (success) {
+      this.gameState = this.savingService.getGameState();
+      this.positionedCharacters = this.savingService.getPositionedCharacters();
+      this.currentTheme = this.savingService.getCurrentTheme();
+      this.gameOver = this.savingService.isGameOver();
     }
   }
 }
