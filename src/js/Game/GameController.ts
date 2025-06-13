@@ -1,6 +1,6 @@
-import Character from '../Entities/Character';
 import GameSavingService from '../services/GameSavingService';
 import GameStateService from '../services/GameStateService';
+import LevelTransitionService from '../services/LevelTransitionService';
 import { CellHighlight, CharacterType, Cursor, Theme } from '../types/enums';
 import { IGameController } from '../types/interfaces';
 import { findCharacterByIndex, formatCharacterInfo, isPlayerCharacter } from '../utils/utils';
@@ -18,19 +18,29 @@ export default class GameController implements IGameController {
   private isComputerTurnInProgress: boolean = false;
   private currentTheme: Theme = Theme.Prairie;
   private gameOver: boolean = false;
+  private levelTransitionService: LevelTransitionService;
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
     this.savingService = new GameSavingService(stateService, gamePlay);
+    this.levelTransitionService = new LevelTransitionService(
+      this.positionedCharacters,
+      this.currentTheme,
+      this.gamePlay,
+      this.gameState
+    );
   }
 
   init(): void {
     // Отрисовываем доску и кнопки управления.
     this.currentTheme = Theme.Prairie;
+    this.levelTransitionService.setCurrentTheme(this.currentTheme);
     this.gamePlay.drawUi(this.currentTheme);
 
     // Генерируем и отрисовываем расположение команд на доске.
     this.positionedCharacters = TeamPositioner.generateAndPositionTeams();
+    this.levelTransitionService.setPositionedCharacters(this.positionedCharacters);
+    this.levelTransitionService.setCurrentTheme(this.currentTheme);
     this.gamePlay.redrawPositions(this.positionedCharacters);
 
     // Показываем подсказки при наведении курсора мыши на ячейку с персонажем.
@@ -530,98 +540,22 @@ export default class GameController implements IGameController {
 
     // Если персонажи команды компьютера закончились, переходим на новый уровень.
     const enemyCharacters = this.positionedCharacters.filter((pc) => !isPlayerCharacter(pc));
-    if (enemyCharacters.length === 0) {
-      this.levelUpPlayerCharacters();
-      this.advanceToNextTheme();
-      this.startNewLevel();
+    if ( enemyCharacters.length === 0 ) {
+      this.levelTransitionService.levelUpPlayerCharacters();
+      this.levelTransitionService.advanceToNextTheme();
+      this.levelTransitionService.startNewLevel();
+
+      // Обновляем текущую тему и список позиционированных персонажей
+      this.currentTheme = this.levelTransitionService.getCurrentTheme();
+      this.positionedCharacters = this.levelTransitionService.getPositionedCharacters();
     }
 
     // Если персонажи игрока закончились, игра окончена.
     const playerCharacters = this.positionedCharacters.filter((pc) => isPlayerCharacter(pc));
-    if (playerCharacters.length === 0) {
+    if ( playerCharacters.length === 0 ) {
       this.gameOver = true;
-      GamePlay.showMessage('Вы проиграли! Игра окончена.');
+      GamePlay.showMessage('Вы проиграли! Все ваши персонажи были выведены из игры. Игра окончена.');
     }
-  }
-
-  /**
-   * Увеличивает уровень указанного персонажа и обновляет его характеристики.
-   * @param {Character} character - Персонаж, уровень которого нужно увеличить.
-   */
-  private levelUpCharacter(character: Character): void {
-    // Увеличиваем уровень персонажа на 1
-    character.level += 1;
-
-    // Обновляем здоровье персонажа, но не более 100
-    character.health = Math.min(character.level + 80, 100);
-
-    // Обновляем атаку и защиту персонажа по формуле:
-    // Math.max(attackBefore, attackBefore * (80 + life) / 100)
-    character.attack = Math.max(character.attack, character.attack * (80 + character.health) / 100);
-    character.defense = Math.max(character.defense, character.defense * (80 + character.health) / 100);
-  }
-
-  /**
-   * Увеличивает уровень персонажей игрока.
-   */
-  private levelUpPlayerCharacters(): void {
-    for (const pc of this.positionedCharacters) {
-      if (isPlayerCharacter(pc)) {
-        this.levelUpCharacter(pc.character);
-      }
-    }
-  }
-
-  /**
-   * Переходит к следующей теме карты.
-   */
-  private advanceToNextTheme(): void {
-    switch (this.currentTheme) {
-      case Theme.Prairie:
-        this.currentTheme = Theme.Desert;
-        break;
-      case Theme.Desert:
-        this.currentTheme = Theme.Arctic;
-        break;
-      case Theme.Arctic:
-        this.currentTheme = Theme.Mountain;
-        break;
-      case Theme.Mountain:
-      default:
-        this.currentTheme = Theme.Prairie;
-        break;
-    }
-  }
-
-  /**
-   * Начинает новый уровень игры.
-   * 
-   * Создает новую команду противника и объединяет ее с текущей командой игрока.
-   * Затем отрисовывает новую тему карты и обновляет позиции персонажей на карте.
-   */
-  private startNewLevel(): void {
-    // Сохраняем текущую команду игрока (оставшихся в живых персонажей)
-    const currentPlayerTeam = this.positionedCharacters.filter(pc => isPlayerCharacter(pc));
-
-    // Позиционируем существующую команду игрока в колонках 0 и 1
-    const repositionedPlayerTeam = TeamPositioner.repositionExistingTeam(
-      currentPlayerTeam,
-    );
-
-    // Генерируем и позиционируем новую команду противника в колонках 6 и 7
-    const newOpponentTeam = TeamPositioner.generateAndPositionOpponentTeam();
-
-    // Объединяем обе команды
-    this.positionedCharacters = [...repositionedPlayerTeam, ...newOpponentTeam];
-
-    // Обновляем UI
-    this.gamePlay.drawUi(this.currentTheme);
-    this.gamePlay.redrawPositions(this.positionedCharacters);
-
-    // Сбрасываем состояние игры
-    this.gameState.isPlayerTurn = true;
-    this.selectedCellIndex = null;
-    this.gameOver = false;
   }
 
   /**
@@ -664,6 +598,10 @@ export default class GameController implements IGameController {
       this.positionedCharacters = this.savingService.getPositionedCharacters();
       this.currentTheme = this.savingService.getCurrentTheme();
       this.gameOver = this.savingService.isGameOver();
+
+      // Обновляем позиционированные персонажи и текущую тему
+      this.levelTransitionService.setPositionedCharacters(this.positionedCharacters);
+      this.levelTransitionService.setCurrentTheme(this.currentTheme);
     }
   }
 }
