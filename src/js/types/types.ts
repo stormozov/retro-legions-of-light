@@ -1,4 +1,4 @@
-import { CharacterType } from './enums';
+import PositionedCharacter from '../Game/PositionedCharacter';
 
 /**
  * Тип позиции ячейки относительно края поля в одном измерении (строка или столбец).
@@ -56,6 +56,63 @@ export type PossibleCharacterSetAttributes = {
 export type AbstractClassErrorType = 'CONSTRUCTOR' | 'ABSTRACT' | 'METHOD';
 
 /**
- * Тип объекта, передаваемого в метод класса GameState.
+ * Тип позиционированного персонажа или null.
  */
-export type isPlayerTurnObject = { isPlayerTurn: boolean };
+export type PositionedCharacterOrNull = PositionedCharacter | null;
+
+/**
+ * Тип, представляющий объект, содержащий информацию об атакующем и его целях.
+ *
+ * @type AttackerWithTargets
+ * @property {PositionedCharacter} attacker - Объект, представляющий атакующего 
+ * персонажа.
+ * @property {PositionedCharacter[]} attackTargets - Массив объектов, 
+ * представляющих цели, на которые может атаковать атакующий.
+ */
+export type AttackerWithTargets = {
+  attacker: PositionedCharacter;
+  attackTargets: PositionedCharacter[];
+}
+
+/**
+ * Тип, представляющий объект, содержащий информацию об атакующем и его цели.
+ *
+ * @type selectedBestAttackerAndTarget
+ * @property {PositionedCharacter} attacker - Объект, представляющий атакующего 
+ * персонажа.
+ * @property {PositionedCharacter} targetPosition - Объект, представляющий цель, 
+ * на которую может атаковать атакующий.
+ */
+export type selectedBestAttackerAndTarget = { 
+  attacker: PositionedCharacter; 
+  targetPosition: PositionedCharacter 
+}
+
+/**
+ * Тип, представляющий объект, содержащий информацию об более подходящем атакующем
+ * и более подходящей ячейке для перемещения.
+ *
+ * @type foundBestMove
+ * @property {PositionedCharacterOrNull} bestAttacker - Объект, представляющий атакующего 
+ * персонажа.
+ * @property {number | null} bestTargetMoveCell - Индекс ячейки, на которую может атаковать 
+ * атакующий.
+ */
+export type foundBestMove = { 
+  bestAttacker: PositionedCharacterOrNull, 
+  bestTargetMoveCell: number | null 
+}
+
+/**
+ * Тип, представляющий объект с двумя массивами: 
+ * - один для компьютерных персонажей, 
+ * - другой — для игровых.
+ * 
+ * @type ComputerAndPlayerCharacters
+ * @property {PositionedCharacter[]} computerCharacters - Массив компьютерных персонажей.
+ * @property {PositionedCharacter[]} playerCharacters - Массив игровых персонажей.
+ */
+export type ComputerAndPlayerCharacters = {
+  computerCharacters: PositionedCharacter[];
+  playerCharacters: PositionedCharacter[];
+}

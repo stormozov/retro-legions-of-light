@@ -4,6 +4,7 @@ import LevelTransitionService from '../services/LevelTransitionService';
 import { CellHighlight, CharacterType, Cursor, Theme } from '../types/enums';
 import { IGameController } from '../types/interfaces';
 import { findCharacterByIndex, formatCharacterInfo, isPlayerCharacter } from '../utils/utils';
+import ComputerTurnExecutor from './ComputerTurnExecutor';
 import GamePlay from './GamePlay';
 import GameState from './GameState';
 import PositionedCharacter from './PositionedCharacter';
@@ -15,10 +16,10 @@ export default class GameController implements IGameController {
   private positionedCharacters: PositionedCharacter[] = [];
   private selectedCellIndex: number | null = null;
   private gameState = new GameState();
-  private isComputerTurnInProgress: boolean = false;
   private currentTheme: Theme = Theme.Prairie;
   private gameOver: boolean = false;
   private levelTransitionService: LevelTransitionService;
+  private computerTurnExecutor: ComputerTurnExecutor;
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
@@ -29,6 +30,19 @@ export default class GameController implements IGameController {
       this.gamePlay,
       this.gameState
     );
+    this.computerTurnExecutor = new ComputerTurnExecutor(
+      this.positionedCharacters,
+      this.gamePlay,
+      this.gameState,
+      this.getAvailableAttackCells.bind(this),
+      this.getAvailableMoveCells.bind(this),
+      this.moveCharacterToCell.bind(this),
+      this.performAttack.bind(this)
+    );
+  }
+
+  private updateComputerTurnExecutorPositionedCharacters(): void {
+    this.computerTurnExecutor.setPositionedCharacters(this.positionedCharacters);
   }
 
   init(): void {
@@ -404,8 +418,11 @@ export default class GameController implements IGameController {
     // Передаем ход
     this.gameState.isPlayerTurn = false;
 
-    // Запускаем ход компьютера
-    await this.computerTurn();
+    // Обновляем positionedCharacters в ComputerTurnExecutor
+    this.updateComputerTurnExecutorPositionedCharacters();
+
+    // Запускаем ход компьютера через ComputerTurnExecutor
+    await this.computerTurnExecutor.execute();
   }
 
   /**
@@ -439,91 +456,7 @@ export default class GameController implements IGameController {
     this.gameState.isPlayerTurn = false;
 
     // Запускаем ход компьютера
-    await this.computerTurn();
-  }
-
-  /**
-   * Выполняет ход компьютера, атакуя слабых противников в первую очередь.
-   */
-  private async computerTurn(): Promise<void> {
-    if ( this.isComputerTurnInProgress ) return;
-    this.isComputerTurnInProgress = true;
-
-    // Получаем всех персонажей компьютера
-    const computerCharacters = this.positionedCharacters.filter((pc) => !isPlayerCharacter(pc));
-
-    // Получаем всех персонажей игрока
-    const playerCharacters = this.positionedCharacters.filter((pc) => isPlayerCharacter(pc));
-
-    // Фильтруем персонажей компьютера, которые могут атаковать
-    const attackersWithTargets = computerCharacters
-      .map((attacker) => {
-        const attackCells = this.getAvailableAttackCells(attacker.position);
-        const attackTargets = playerCharacters.filter((pc) => attackCells.includes(pc.position));
-        return { attacker, attackTargets };
-      })
-      .filter(({ attackTargets }) => attackTargets.length > 0);
-
-    if ( attackersWithTargets.length > 0 ) {
-      // Выбираем атакующего, который может атаковать самого слабого персонажа
-      attackersWithTargets.sort((a, b) => {
-        const aMinHealth = Math.min(...a.attackTargets.map((t) => t.character.health));
-        const bMinHealth = Math.min(...b.attackTargets.map((t) => t.character.health));
-        return aMinHealth - bMinHealth;
-      });
-
-      const { attacker, attackTargets } = attackersWithTargets[0];
-      attackTargets.sort((a, b) => a.character.health - b.character.health);
-      const targetPosition = attackTargets[0];
-
-      // Выполняем атаку
-      await this.performAttack(attacker, targetPosition);
-    } else {
-      // Нет целей для атаки, пытаемся подвинуться ближе к игроку
-      // Выбираем персонажа, который может подвинуться ближе к ближайшему игроку
-      let bestMove = null;
-      let bestDistance = Infinity;
-      let bestAttacker = null;
-      let bestTargetMoveCell = null;
-
-      for ( const attackerPosition of computerCharacters ) {
-        const moveCells = this.getAvailableMoveCells(attackerPosition.position);
-        if ( moveCells.length === 0 ) continue;
-
-        // Находим ближайшего игрока
-        const nearestPlayer = playerCharacters.reduce((nearest, pc) => {
-          const distNearest = Math.abs(nearest.position - attackerPosition.position);
-          const distCurrent = Math.abs(pc.position - attackerPosition.position);
-          return distCurrent < distNearest ? pc : nearest;
-        }, playerCharacters[0]);
-
-        // Выбираем клетку для движения, которая ближе всего к игроку
-        let targetMoveCell = moveCells[0];
-        let minDistance = Math.abs(moveCells[0] - nearestPlayer.position);
-        for ( const cell of moveCells ) {
-          const distance = Math.abs(cell - nearestPlayer.position);
-          if ( distance < minDistance ) {
-            minDistance = distance;
-            targetMoveCell = cell;
-          }
-        }
-
-        if ( minDistance < bestDistance ) {
-          bestDistance = minDistance;
-          bestMove = targetMoveCell;
-          bestAttacker = attackerPosition;
-          bestTargetMoveCell = targetMoveCell;
-        }
-      }
-
-      if ( bestAttacker && bestTargetMoveCell !== null ) {
-        await this.moveCharacterToCell(bestAttacker, bestTargetMoveCell);
-      }
-    }
-
-    // После хода компьютера передаем ход игроку
-    this.gameState.isPlayerTurn = true;
-    this.isComputerTurnInProgress = false;
+    await this.computerTurnExecutor.execute();
   }
 
   /**
@@ -556,6 +489,9 @@ export default class GameController implements IGameController {
       this.gameOver = true;
       GamePlay.showMessage('Вы проиграли! Все ваши персонажи были выведены из игры. Игра окончена.');
     }
+
+    // Обновляем positionedCharacters в ComputerTurnExecutor
+    this.updateComputerTurnExecutorPositionedCharacters();
   }
 
   /**
