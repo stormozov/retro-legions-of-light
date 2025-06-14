@@ -36,7 +36,9 @@ export default class LevelTransitionService implements ILevelTransitionService {
    */
   startNewLevel(): void {
     // Сохраняем текущую команду игрока (оставшихся в живых персонажей)
-    const currentPlayerTeam = this.positionedCharacters.filter((pc) => isPlayerCharacter(pc));
+    const currentPlayerTeam = this.positionedCharacters.filter(
+      (pc) => isPlayerCharacter(pc) && pc.character.health > 0
+    );
 
     // Позиционируем существующую команду игрока в колонках 0 и 1
     const repositionedPlayerTeam = TeamPositioner.repositionExistingTeam(
@@ -99,19 +101,23 @@ export default class LevelTransitionService implements ILevelTransitionService {
    * @param {Character} character - Персонаж, уровень которого нужно увеличить.
    */
   levelUpCharacter(character: Character): void {
-    // Увеличиваем уровень персонажа на 1
-    character.level += 1;
+    if ( character.health > 0 ) {
+      // Увеличиваем уровень персонажа на 1
+      character.level += 1;
 
-    // Обновляем здоровье персонажа, но не более 100
-    character.health = Math.min(character.level + 80, 100);
+      const newHealth = Math.round(Math.min(character.health + 80, 100));
 
-    // Вычисляем коэффициент увеличения характеристик
-    const coefficient = (80 + character.health) / 100;
+      // Устанавливаем здоровье на новое значение
+      character.health = newHealth;
 
-    // Обновляем атаку и защиту персонажа по формуле:
-    // Math.max(attackBefore, attackBefore * (80 + life) / 100)
-    character.attack = Math.max(character.attack, character.attack * coefficient);
-    character.defense = Math.max(character.defense, character.defense * coefficient);
+      // Вычисляем коэффициент увеличения характеристик на основе нового здоровья
+      const coefficient = (80 + newHealth) / 100;
+
+      // Обновляем атаку и защиту персонажа по формуле:
+      // Math.max(attackBefore, attackBefore * (80 + life) / 100)
+      character.attack = Math.round(Math.max(character.attack, character.attack * coefficient));
+      character.defense = Math.round(Math.max(character.defense, character.defense * coefficient));
+    }
   }
 
   /**
