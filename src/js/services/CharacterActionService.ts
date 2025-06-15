@@ -114,38 +114,70 @@ export default class CharacterActionService {
   ): number[] {
     const boardSize = 8;
     const cellsInRange: number[] = [];
+    const directions = [
+      [0, 1],   // Вниз
+      [1, 0],   // Вправо
+      [0, -1],  // Вверх
+      [-1, 0],  // Влево
+      [1, 1],   // Вниз-вправо
+      [1, -1],  // Вверх-вправо
+      [-1, 1],  // Вниз-влево
+      [-1, -1]  // Вверх-влево
+    ];
 
-    const startX: number = index % boardSize;
-    const startY: number = Math.floor(index / boardSize);
+    const startX = index % boardSize;
+    const startY = Math.floor(index / boardSize);
 
-    for (let y = 0; y < boardSize; y++) {
-      for (let x = 0; x < boardSize; x++) {
-        const distanceX: number = Math.abs(x - startX);
-        const distanceY: number = Math.abs(y - startY);
+    for (const [dx, dy] of directions) {
+      for (let step = 1; step <= maxDistance; step++) {
+        const x = startX + dx * step;
+        const y = startY + dy * step;
 
-        // Movement and attack allowed only in straight and diagonal lines (like a queen in chess)
-        const isStraightOrDiagonal = x === startX || y === startY || distanceX === distanceY;
-        if (!isStraightOrDiagonal) continue;
+        // Проверка выхода за границы доски
+        if (x < 0 || x >= boardSize || y < 0 || y >= boardSize) break;
 
-        const distance = Math.max(distanceX, distanceY);
-        if (distance === 0 || distance > maxDistance) continue;
+        const cellIndex = (y * boardSize) + x;
 
-        const cellIndex: number = y * boardSize + x;
-
-        if (allowMove) {
-          // For movement, can jump over other characters, but cannot move to occupied cell
-          const occupied = this.positionedCharacters.some((pc) => pc.position === cellIndex);
-          if (!occupied) cellsInRange.push(cellIndex);
-        } else {
-          // For attack, cell must be occupied by enemy character
-          const enemyCharacter = findCharacterByIndex(this.positionedCharacters, cellIndex);
-          if (enemyCharacter && isPlayerCharacter(enemyCharacter) !== isPlayerAttacker) {
-            cellsInRange.push(cellIndex);
-          }
-        }
+        allowMove
+          ? this.processMoveCell(cellIndex, cellsInRange)
+          : this.processAttackCell(cellIndex, isPlayerAttacker, cellsInRange);
       }
     }
 
     return cellsInRange;
+  }
+
+  /**
+   * Проверяет, доступна ли клетка для хода. 
+   * Если да, то добавляет индекс клетки в массив.
+   *
+   * @param {number} cellIndex - Индекс клетки.
+   * @param {number[]} result - Результат обработки.
+   */
+  private processMoveCell(cellIndex: number, result: number[]): void {
+    const isOccupied = this.positionedCharacters.some((pc) => pc.position === cellIndex);
+    if (!isOccupied) result.push(cellIndex);
+  }
+
+  /**
+   * Проверяет, доступна ли клетка для атаки. 
+   * Если да, то добавляет индекс клетки в массив.
+   *
+   * @param {number} cellIndex - Индекс клетки.
+   * @param {boolean} isPlayerAttacker - Флаг, указывающий, что атакующий персонаж игрока.
+   * @param {number[]} result - Результат обработки.
+   */
+  private processAttackCell(
+    cellIndex: number,
+    isPlayerAttacker: boolean,
+    result: number[]
+  ): void {
+    const character = findCharacterByIndex(
+      this.positionedCharacters,
+      cellIndex
+    );
+    if (character && isPlayerCharacter(character) !== isPlayerAttacker) {
+      result.push(cellIndex);
+    }
   }
 }
