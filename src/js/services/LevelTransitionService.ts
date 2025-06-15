@@ -48,13 +48,28 @@ export default class LevelTransitionService implements ILevelTransitionService {
     // Генерируем и позиционируем новую команду противника в колонках 6 и 7
     const newOpponentTeam = TeamPositioner.generateAndPositionOpponentTeam();
 
+    // Validate opponent positions to ensure columns are 6 or 7
+    const validOpponentTeam = newOpponentTeam.map((pc) => {
+      const col = pc.position % TeamPositioner.boardSize;
+      if (!TeamPositioner.opponentColumns.includes(col)) {
+        // Correct position by forcing column to 6 (or 7)
+        const row = Math.floor(pc.position / TeamPositioner.boardSize);
+        const correctedPosition = row * TeamPositioner.boardSize + TeamPositioner.opponentColumns[0];
+        return new PositionedCharacter(pc.character, correctedPosition);
+      }
+      return pc;
+    });
+
     // Объединяем обе команды
     this.positionedCharacters.splice(
       0, 
       this.positionedCharacters.length, 
       ...repositionedPlayerTeam, 
-      ...newOpponentTeam
+      ...validOpponentTeam
     );
+
+    // Debug logging for opponent positions
+    console.log('Opponent positions after validation:', validOpponentTeam.map(pc => pc.position));
 
     // Обновляем UI
     this.gamePlay.drawUi(this.currentTheme);

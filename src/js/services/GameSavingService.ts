@@ -48,12 +48,14 @@ export default class GameSavingService {
   saveGame(
     positionedCharacters: PositionedCharacter[],
     currentTheme: GameState['currentTheme'],
-    gameOver: boolean
+    gameOver: boolean,
+    isPlayerTurn: boolean
   ): void {
     try {
       this.gameState.positionedCharacters = positionedCharacters;
       this.gameState.currentTheme = currentTheme;
       this.gameState.gameOver = gameOver;
+      this.gameState.isPlayerTurn = isPlayerTurn;
       this.stateService.save(this.gameState);
 
       GamePlay.showMessage('Игра успешно сохранена');

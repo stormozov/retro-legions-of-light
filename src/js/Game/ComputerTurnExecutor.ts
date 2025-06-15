@@ -55,6 +55,14 @@ export default class ComputerTurnExecutor {
   }
 
   /**
+   * Обновляет ссылку на состояние игры.
+   * @param {GameState} gameState - Новый объект состояния игры.
+   */
+  public setGameState(gameState: GameState): void {
+    this.gameState = gameState;
+  }
+
+  /**
    * Выполняет ход компьютера.
    */
   async execute(): Promise<void> {

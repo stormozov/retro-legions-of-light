@@ -1,7 +1,8 @@
+import CharacterActionService from '../services/CharacterActionService';
 import GameSavingService from '../services/GameSavingService';
 import GameStateService from '../services/GameStateService';
 import LevelTransitionService from '../services/LevelTransitionService';
-import { CellHighlight, CharacterType, Cursor, Theme } from '../types/enums';
+import { CellHighlight, Cursor, Theme } from '../types/enums';
 import { IGameController } from '../types/interfaces';
 import { findCharacterByIndex, formatCharacterInfo, isPlayerCharacter } from '../utils/utils';
 import ComputerTurnExecutor from './ComputerTurnExecutor';
@@ -20,6 +21,7 @@ export default class GameController implements IGameController {
   private gameOver: boolean = false;
   private levelTransitionService: LevelTransitionService;
   private computerTurnExecutor: ComputerTurnExecutor;
+  private characterActionService: CharacterActionService;
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
@@ -30,12 +32,13 @@ export default class GameController implements IGameController {
       this.gamePlay,
       this.gameState
     );
+    this.characterActionService = new CharacterActionService(this.positionedCharacters);
     this.computerTurnExecutor = new ComputerTurnExecutor(
       this.positionedCharacters,
       this.gamePlay,
       this.gameState,
-      this.getAvailableAttackCells.bind(this),
-      this.getAvailableMoveCells.bind(this),
+      this.characterActionService.getAvailableAttackCells.bind(this.characterActionService),
+      this.characterActionService.getAvailableMoveCells.bind(this.characterActionService),
       this.moveCharacterToCell.bind(this),
       this.performAttack.bind(this)
     );
@@ -56,6 +59,8 @@ export default class GameController implements IGameController {
     this.levelTransitionService.setPositionedCharacters(this.positionedCharacters);
     this.levelTransitionService.setCurrentTheme(this.currentTheme);
     this.gamePlay.redrawPositions(this.positionedCharacters);
+
+    this.characterActionService.setPositionedCharacters(this.positionedCharacters);
 
     // Показываем подсказки при наведении курсора мыши на ячейку с персонажем.
     this.showBriefInfo();
@@ -137,7 +142,7 @@ export default class GameController implements IGameController {
       }
 
       // Проверяем, можно ли перейти на выбранную клетку
-      const availableMoveCells = this.getAvailableMoveCells(this.selectedCellIndex!);
+      const availableMoveCells = this.characterActionService.getAvailableMoveCells(this.selectedCellIndex!);
       if ( availableMoveCells.includes(index) ) {
         // Подсвечиваем зеленым и меняем курсор
         this.gamePlay.deselectCell(this.selectedCellIndex);
@@ -153,7 +158,7 @@ export default class GameController implements IGameController {
       }
 
       // Проверяем, можно ли атаковать выбранную клетку
-      const availableAttackCells = this.getAvailableAttackCells(this.selectedCellIndex!);
+      const availableAttackCells = this.characterActionService.getAvailableAttackCells(this.selectedCellIndex!);
       if ( availableAttackCells.includes(index) ) {
         // Подсвечиваем красным и меняем курсор
         this.gamePlay.deselectCell(this.selectedCellIndex);
@@ -230,7 +235,7 @@ export default class GameController implements IGameController {
     }
 
     // Если навели на клетку для перемещения - подсветка зеленым, курсор pointer
-    const availableMoveCells = this.getAvailableMoveCells(this.selectedCellIndex!);
+    const availableMoveCells = this.characterActionService.getAvailableMoveCells(this.selectedCellIndex!);
     if ( availableMoveCells.includes(index) ) {
       this.gamePlay.setCursor(Cursor.Pointer);
       this.gamePlay.selectCell(index, CellHighlight.Green);
@@ -239,7 +244,7 @@ export default class GameController implements IGameController {
     }
 
     // Если навели на клетку для атаки - подсветка красным, курсор crosshair
-    const availableAttackCells = this.getAvailableAttackCells(this.selectedCellIndex!);
+    const availableAttackCells = this.characterActionService.getAvailableAttackCells(this.selectedCellIndex!);
     if ( availableAttackCells.includes(index) ) {
       this.gamePlay.setCursor(Cursor.Crosshair);
       this.gamePlay.selectCell(index, CellHighlight.Red);
@@ -258,133 +263,6 @@ export default class GameController implements IGameController {
   }
 
   /**
-   * Возвращает массив индексов клеток, на которые можно перейти для выбранного персонажа.
-   * @param {number} index - индекс выбранной клетки.
-   * @returns {number[]} - массив индексов доступных клеток для перемещения.
-   */
-  private getAvailableMoveCells(index: number): number[] {
-    const characterPosition = findCharacterByIndex(this.positionedCharacters, index);
-    if (!characterPosition) return [];
-
-    const maxDistance = this.getMovementDistance(characterPosition.character.type);
-
-    return this.getCellsInRange(index, maxDistance, true);
-  }
-
-  /**
-   * Возвращает массив индексов клеток, на которые можно атаковать для выбранного персонажа.
-   * @param {number} index - индекс выбранной клетки.
-   * @returns {number[]} - массив индексов доступных клеток для атаки.
-   */
-  private getAvailableAttackCells(index: number): number[] {
-    const characterPosition = findCharacterByIndex(this.positionedCharacters, index);
-    if (!characterPosition) return [];
-
-    const maxDistance = this.getAttackDistance(characterPosition.character.type);
-    const isPlayerAttacker = isPlayerCharacter(characterPosition);
-
-    return this.getCellsInRange(index, maxDistance, false, isPlayerAttacker);
-  }
-
-  /**
-   * Возвращает максимальную дистанцию перемещения для типа персонажа.
-   * @param {CharacterType} type - тип персонажа.
-   * @returns {number} - максимальная дистанция перемещения.
-   */
-  private getMovementDistance(type: CharacterType): number {
-    switch (type) {
-      case CharacterType.Swordsman:
-      case CharacterType.Undead:
-        return 4;
-      case CharacterType.Bowman:
-      case CharacterType.Vampire:
-        return 2;
-      case CharacterType.Magician:
-      case CharacterType.Demon:
-        return 1;
-      default:
-        return 0;
-    }
-  }
-
-  /**
-   * Возвращает максимальную дистанцию атаки для типа персонажа.
-   * @param {CharacterType} type - тип персонажа.
-   * @returns {number} - максимальная дистанция атаки.
-   */
-  private getAttackDistance(type: CharacterType): number {
-    switch (type) {
-      case CharacterType.Swordsman:
-      case CharacterType.Undead:
-        return 1;
-      case CharacterType.Bowman:
-      case CharacterType.Vampire:
-        return 2;
-      case CharacterType.Magician:
-      case CharacterType.Demon:
-        return 4;
-      default:
-        return 0;
-    }
-  }
-  
-  /**
-   * Возвращает массив индексов клеток в радиусе от заданной клетки.
-   * 
-   * @param {number} index - индекс клетки.
-   * @param {number} maxDistance - максимальное расстояние.
-   * @param {boolean} allowMove - разрешено ли перемещение (true) или атака (false).
-   * @param {boolean} isPlayerAttacker - является ли атакующий персонаж игроком.
-   * 
-   * @returns {number[]} - массив индексов клеток.
-   */
-  private getCellsInRange(
-    index: number, 
-    maxDistance: number, 
-    allowMove: boolean, 
-    isPlayerAttacker?: boolean
-  ): number[] {
-    const boardSize = 8;
-    const cellsInRange: number[] = [];
-
-    const startX: number = index % boardSize;
-    const startY: number = Math.floor(index / boardSize);
-
-    for ( let y = 0; y < boardSize; y++ ) {
-      for ( let x = 0; x < boardSize; x++ ) {
-        const distanceX: number = Math.abs(x - startX);
-        const distanceY: number = Math.abs(y - startY);
-
-        // Передвижение и атака разрешены только по прямым и диагональным линиям 
-        // (как у ферзя в шахматах)
-        const isStraightOrDiagonal = x === startX || y === startY || distanceX === distanceY;
-        if ( !isStraightOrDiagonal ) continue;
-
-        const distance = Math.max(distanceX, distanceY);
-        if ( distance === 0 || distance > maxDistance ) continue;
-
-        const cellIndex: number = y * boardSize + x;
-
-        if (allowMove) {
-          // Для передвижения может перепрыгивать через других персонажей, 
-          // поэтому проверка на блокировку не требуется. Но не может переместиться 
-          // в ячейку, занятую любым персонажем
-          const occupied = this.positionedCharacters.some((pc) => pc.position === cellIndex);
-          if (!occupied) cellsInRange.push(cellIndex);
-        } else {
-          // Для атаки ячейка должна быть занята вражеским персонажем
-          const enemyCharacter = findCharacterByIndex(this.positionedCharacters, cellIndex);
-          if ( enemyCharacter && isPlayerCharacter(enemyCharacter) !== isPlayerAttacker ) {
-            cellsInRange.push(cellIndex);
-          }
-        }
-      }
-    }
-
-    return cellsInRange;
-  }
-
-  /**
    * Перемещает персонажа на указанную клетку.
    * @param {PositionedCharacter} characterPosition - персонаж с текущей позицией
    * @param {number} targetIndex - индекс клетки для перемещения
@@ -400,6 +278,8 @@ export default class GameController implements IGameController {
     this.positionedCharacters = this.positionedCharacters.map((pc) =>
       pc === characterPosition ? updatedPositionedCharacter : pc
     );
+
+    this.characterActionService.setPositionedCharacters(this.positionedCharacters);
 
     // Обновляем отображение персонажей
     this.gamePlay.redrawPositions(this.positionedCharacters);
@@ -469,6 +349,9 @@ export default class GameController implements IGameController {
     this.positionedCharacters = this.positionedCharacters.filter(
       (pc) => pc !== targetPosition
     );
+
+    this.characterActionService.setPositionedCharacters(this.positionedCharacters);
+
     this.gamePlay.redrawPositions(this.positionedCharacters);
 
     // Если персонажи команды компьютера закончились, переходим на новый уровень.
@@ -481,6 +364,7 @@ export default class GameController implements IGameController {
       // Обновляем текущую тему и список позиционированных персонажей
       this.currentTheme = this.levelTransitionService.getCurrentTheme();
       this.positionedCharacters = this.levelTransitionService.getPositionedCharacters();
+      this.characterActionService.setPositionedCharacters(this.positionedCharacters);
     }
 
     // Если персонажи игрока закончились, игра окончена.
@@ -515,7 +399,8 @@ export default class GameController implements IGameController {
     this.savingService.saveGame(
       this.positionedCharacters,
       this.currentTheme,
-      this.gameOver
+      this.gameOver,
+      this.gameState.isPlayerTurn
     );
   }
 
@@ -532,12 +417,19 @@ export default class GameController implements IGameController {
     if (success) {
       this.gameState = this.savingService.getGameState();
       this.positionedCharacters = this.savingService.getPositionedCharacters();
+      this.characterActionService.setPositionedCharacters(this.positionedCharacters);
       this.currentTheme = this.savingService.getCurrentTheme();
       this.gameOver = this.savingService.isGameOver();
 
       // Обновляем позиционированные персонажи и текущую тему
       this.levelTransitionService.setPositionedCharacters(this.positionedCharacters);
       this.levelTransitionService.setCurrentTheme(this.currentTheme);
+
+      // Обновляем ссылку на gameState в ComputerTurnExecutor
+      this.computerTurnExecutor.setGameState(this.gameState);
+
+      // Обновляем ссылку на positionedCharacters в ComputerTurnExecutor
+      this.computerTurnExecutor.setPositionedCharacters(this.positionedCharacters);
     }
   }
 }
