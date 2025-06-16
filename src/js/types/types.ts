@@ -116,3 +116,28 @@ export type ComputerAndPlayerCharacters = {
   computerCharacters: PositionedCharacter[];
   playerCharacters: PositionedCharacter[];
 }
+
+/**
+ * Интерфейс, описывающий приоритетную цель атаки.
+ * Используется для определения порядка атаки между персонажами в игре.
+ * 
+ * Содержит информацию об атакующем персонаже, его цели и приоритете атаки.
+ * Приоритет определяет очерёдность атаки: чем ниже число, тем раньше происходит атака.
+ * 
+ * @interface AttackerTargetPriority
+ * @property {PositionedCharacter} attacker - Атакующий персонаж с координатами
+ * @property {PositionedCharacter} target - Цель атаки с координатами
+ * @property {number} priority - Приоритет атаки (меньшее число = выше приоритет)
+ * 
+ * @example
+ * const attackPriority: AttackerTargetPriority = {
+ *   attacker: { id: 1, x: 10, y: 20 },
+ *   target: { id: 2, x: 15, y: 25 },
+ *   priority: 2
+ * };
+ */
+export type AttackerTargetPriority = {
+  attacker: PositionedCharacter;
+  target: PositionedCharacter;
+  priority: number;
+};

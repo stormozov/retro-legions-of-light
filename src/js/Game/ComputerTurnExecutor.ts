@@ -1,4 +1,5 @@
 import {
+  AttackerTargetPriority,
   AttackerWithTargets,
   ComputerAndPlayerCharacters,
   foundBestMove,
@@ -121,27 +122,76 @@ export default class ComputerTurnExecutor {
   }
 
   /**
-   * Выбирает лучшего атакующего и цель для атаки.
+   * Вычисляет приоритет атаки для пары атакующего и цели.
    *
-   * @param {AttackerWithTargets[]} attackersWithTargets - Массив компьютерных персонажей с 
-   * доступными целями для атаки.
-   * @returns {selectedBestAttackerAndTarget | null} - Лучший атакующий и цель для атаки или null, 
-   * если нет доступных целей.
+   * @param {PositionedCharacter} attacker - Атакующий персонаж.
+   * @param {PositionedCharacter} target - Цель атаки.
+   * 
+   * @returns {number} - Значение приоритета.
+   */
+  private calculateAttackPriority(
+    attacker: PositionedCharacter, 
+    target: PositionedCharacter
+  ): number {
+    const K1 = 0.6; // вес силы атаки
+    const K2 = -0.3; // приоритет слабых целей
+    const K3 = 1.0; // важность добивания
+    const K4 = 0.2; // штраф за расстояние
+
+    const attack = attacker.character.attack;
+    const enemyHealth = target.character.health;
+
+    // Оценка урона по цели
+    const damageToTarget = Math.max(attack - target.character.defense, attack * 0.1);
+
+    // Расстояние между атакующим и целью
+    const distance = Math.abs(attacker.position - target.position);
+
+    // Проверка, убивает ли атака цель (добивание)
+    const finishingMoveBonus = damageToTarget >= enemyHealth ? 10 : 0;
+
+    // Формула приоритета
+    const priority = (attack * K1) 
+      + (enemyHealth * K2) 
+      + (damageToTarget * K3) 
+      - (distance * K4) 
+      + finishingMoveBonus;
+
+    return priority;
+  }
+
+  /**
+   * Выбирает лучшего атакующего и цель для атаки с учетом новой системы приоритетов.
+   *
+   * @param {AttackerWithTargets[]} attackersWithTargets - Массив компьютерных 
+   * персонажей с доступными целями для атаки.
+   * 
+   * @returns {selectedBestAttackerAndTarget | null} - Лучший атакующий и цель для 
+   * атаки или null, если нет доступных целей.
    */
   private selectBestAttackerAndTarget(
     attackersWithTargets: AttackerWithTargets[]
   ): selectedBestAttackerAndTarget | null {
-    attackersWithTargets.sort((a, b) => {
-      const aMinHealth = Math.min(...a.attackTargets.map((t) => t.character.health));
-      const bMinHealth = Math.min(...b.attackTargets.map((t) => t.character.health));
-      return aMinHealth - bMinHealth;
-    });
+    if (attackersWithTargets.length === 0) return null;
 
-    const { attacker, attackTargets } = attackersWithTargets[0];
-    attackTargets.sort((a, b) => a.character.health - b.character.health);
-    const targetPosition = attackTargets[0];
+    // Массив для хранения всех пар атакующий-цель с их приоритетами
+    const attackerTargetPriorities: AttackerTargetPriority[] = [];
 
-    return { attacker, targetPosition };
+    // Заполняем массив приоритетов
+    for (const { attacker, attackTargets } of attackersWithTargets) {
+      for (const target of attackTargets) {
+        const priority = this.calculateAttackPriority(attacker, target);
+        attackerTargetPriorities.push({ attacker, target, priority });
+      }
+    }
+
+    // Сортируем по убыванию приоритета
+    attackerTargetPriorities.sort((a, b) => b.priority - a.priority);
+
+    // Выбираем пару с максимальным приоритетом
+    const best = attackerTargetPriorities[0];
+
+    return { attacker: best.attacker, targetPosition: best.target };
   }
 
   /**
