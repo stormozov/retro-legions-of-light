@@ -1,4 +1,5 @@
 import Character from './Character';
+import Magician from './Heroes/Magician';
 
 /**
  * Класс, представляющий персонажей команды.
@@ -21,6 +22,7 @@ export default class Team {
 
   /**
    * Возвращает персонажей в команде в виде массива.
+   * 
    * @returns {Character[]} массив персонажей, входящих в команду.
    */
   get members(): Character[] {
@@ -29,6 +31,7 @@ export default class Team {
 
   /**
    * Возвращает количество персонажей в команде.
+   * 
    * @returns {number} количество персонажей в команде
    */
   get size(): number {
@@ -37,26 +40,35 @@ export default class Team {
 
   /**
    * Добавляет одного персонажа в команду.
+   * 
    * @param character - персонаж, которого нужно добавить в команду.
    * @returns this Возвращаем this для поддержки цепочек
    */
   add(character: Character): this {
+    if (character instanceof Magician) {
+      const hasMagician = this.members.some((member) => member instanceof Magician);
+      if (hasMagician) return this;
+    }
+
     this._members.add(character);
+
     return this;
   }
 
   /**
    * Добавляет несколько персонажей в команду.
+   * 
    * @param characters - массив персонажей, которых нужно добавить в команду.
    * @returns this
    */
   addAll(characters: Character[]): this {
-    characters.forEach((character) => this._members.add(character));
+    characters.forEach((character) => this.add(character));
     return this;
   }
 
   /**
    * Удаляет персонажа из команды.
+   * 
    * @param character - персонаж, которого нужно удалить из команды.
    * @returns {Boolean} true, если персонаж был удален, иначе false.
    */
@@ -66,6 +78,7 @@ export default class Team {
 
   /**
    * Проверяет есть ли персонаж в команде.
+   * 
    * @param character - персонаж, которого нужно проверить.
    * @returns {Boolean} true, если персонаж есть в команде, иначе false.
    */

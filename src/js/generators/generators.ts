@@ -1,5 +1,6 @@
 import Character from '../Entities/Character';
 import Team from '../Entities/Team';
+import { CharacterType } from '../types/enums';
 import { CharacterLevel } from '../types/types';
 
 /**
@@ -50,8 +51,19 @@ export function generateTeam(
   const team = new Team();
   const generator = characterGenerator(allowedTypes, maxLevel);
 
-  for ( let i = 0; i < characterCount; i++ ) {
-    team.add(generator.next().value);
+  while (team.size < characterCount) {
+    const character = generator.next().value;
+    const instanceType = character.constructor.name;
+
+    if (instanceType === CharacterType.Magician) {
+      // Проверяем, что команда не содержит двух магов
+      const hasMagician = team.members.some(
+        (member) => member.constructor.name === CharacterType.Magician
+      );
+      if (!hasMagician) team.add(character);
+    } else {
+      team.add(character);
+    }
   }
 
   return team;
