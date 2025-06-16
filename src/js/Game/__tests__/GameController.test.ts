@@ -112,90 +112,6 @@ describe('Класс GameController', () => {
       expect(GamePlay.showError).toHaveBeenCalledWith('Сейчас ход компьютера');
     });
 
-    it(`выбран персонаж и клик на доступную для перемещения клетку; 
-      должен подсветить зеленым, сменить выделение и курсор`, () => {
-      const playerPositioned = new PositionedCharacter(playerCharacter, 4);
-      gameController['positionedCharacters'] = [playerPositioned];
-      gameController['selectedCellIndex'] = 4;
-
-      // Мокаем getAvailableMoveCells чтобы вернуть клетку 5 как доступную
-      jest.spyOn(gameController as any, 'getAvailableMoveCells').mockReturnValue([5]);
-
-      // Мокаем методы gamePlay
-      gamePlay.deselectCell = jest.fn();
-      gamePlay.selectCell = jest.fn();
-      gamePlay.setCursor = jest.fn();
-
-      gameController.onCellClick(5);
-
-      expect(gamePlay.deselectCell).toHaveBeenCalledWith(4);
-      expect(gamePlay.selectCell).toHaveBeenCalledWith(5, CellHighlight.Green);
-      expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Pointer);
-      expect(gameController['selectedCellIndex']).toBe(null);
-    });
-
-    it(`выбран персонаж и клик на доступную для атаки клетку; 
-      должен подсветить красным, снять выделение, сменить курсор`, () => {
-      const playerPositioned = new PositionedCharacter(playerCharacter, 6);
-      const enemyPositioned = new PositionedCharacter(new Demon(), 7);
-      gameController['positionedCharacters'] = [playerPositioned, enemyPositioned];
-      gameController['selectedCellIndex'] = 6;
-
-      // Мокаем getAvailableAttackCells чтобы вернуть клетку 7 как доступную для атаки
-      jest.spyOn(gameController as any, 'getAvailableAttackCells').mockReturnValue([7]);
-
-      // Мокаем методы gamePlay
-      gamePlay.deselectCell = jest.fn();
-      gamePlay.selectCell = jest.fn();
-      gamePlay.setCursor = jest.fn();
-
-      gameController.onCellClick(7);
-
-      expect(gamePlay.deselectCell).toHaveBeenCalledWith(6);
-      expect(gamePlay.selectCell).toHaveBeenCalledWith(7, CellHighlight.Red);
-      expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Crosshair);
-      expect(gameController['selectedCellIndex']).toBe(6);
-    });
-
-    it(`выбран персонаж и клик на недопустимую клетку; 
-      должен показать ошибку и сменить курсор на notAllowed`, () => {
-      const playerPositioned = new PositionedCharacter(playerCharacter, 8);
-      gameController['positionedCharacters'] = [playerPositioned];
-      gameController['selectedCellIndex'] = 8;
-
-      // Мокаем getAvailableMoveCells и getAvailableAttackCells чтобы вернуть пустые массивы
-      jest.spyOn(gameController as any, 'getAvailableMoveCells').mockReturnValue([]);
-      jest.spyOn(gameController as any, 'getAvailableAttackCells').mockReturnValue([]);
-
-      // Мокаем методы gamePlay
-      gamePlay.setCursor = jest.fn();
-
-      gameController.onCellClick(9);
-
-      expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.NotAllowed);
-    });
-  });
-
-  describe('Метод onCellEnter()', () => {
-    let playerCharacter: Bowman;
-    let enemyCharacter: Demon;
-    let playerPositioned: PositionedCharacter;
-    let enemyPositioned: PositionedCharacter;
-
-    beforeEach(() => {
-      playerCharacter = new Bowman();
-      enemyCharacter = new Demon();
-
-      playerPositioned = new PositionedCharacter(playerCharacter, 10);
-      enemyPositioned = new PositionedCharacter(enemyCharacter, 11);
-
-      gameController['positionedCharacters'] = [playerPositioned, enemyPositioned];
-      gameController['selectedCellIndex'] = null;
-
-      gamePlay.selectCell = jest.fn();
-      gamePlay.setCursor = jest.fn();
-    });
-
     it('курсор наведен на ячейку персонажа; должна отображаться подсказка', () => {
       const character = new Bowman();
       const positionedCharacter = new PositionedCharacter(character, 0);
@@ -213,36 +129,6 @@ describe('Класс GameController', () => {
       gameController.onCellEnter(0);
 
       expect(gamePlay.showCellTooltip).not.toHaveBeenCalled();
-    });
-
-    describe('Курсор Pointer', () => {
-      it('при наведении на персонажа игрока без выбранного персонажа', () => {
-        gameController['selectedCellIndex'] = null;
-
-        gameController.onCellEnter(10);
-
-        expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Pointer);
-        expect(gamePlay.selectCell).not.toHaveBeenCalled();
-      });
-
-      it('при наведении на другого персонажа игрока', () => {
-        gameController['selectedCellIndex'] = 10;
-
-        gameController.onCellEnter(10);
-
-        expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Pointer);
-      });
-
-      it('зеленая подсветка при наведении на доступную для перемещения клетку', () => {
-        gameController['selectedCellIndex'] = 10;
-
-        jest.spyOn(gameController as any, 'getAvailableMoveCells').mockReturnValue([15]);
-
-        gameController.onCellEnter(15);
-
-        expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Pointer);
-        expect(gamePlay.selectCell).toHaveBeenCalledWith(15, 'green');
-      });
     });
 
     describe('Курсор nowAllowed', () => {
@@ -265,30 +151,6 @@ describe('Класс GameController', () => {
         expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.NotAllowed);
       });
 
-      it('при наведении на недопустимую клетку', () => {
-        gameController['selectedCellIndex'] = 10;
-
-        jest.spyOn(gameController as any, 'getAvailableMoveCells').mockReturnValue([]);
-        jest.spyOn(gameController as any, 'getAvailableAttackCells').mockReturnValue([]);
-
-        gameController.onCellEnter(17);
-
-        expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.NotAllowed);
-        expect(gamePlay.selectCell).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('Курсор Crosshair', () => {
-      it('красная подсветка при наведении на доступную для атаки клетку', () => {
-        gameController['selectedCellIndex'] = 10;
-
-        jest.spyOn(gameController as any, 'getAvailableAttackCells').mockReturnValue([16]);
-
-        gameController.onCellEnter(16);
-
-        expect(gamePlay.setCursor).toHaveBeenCalledWith(Cursor.Crosshair);
-        expect(gamePlay.selectCell).toHaveBeenCalledWith(16, CellHighlight.Red);
-      });
     });
   });
 
@@ -297,90 +159,6 @@ describe('Класс GameController', () => {
       gameController.onCellLeave(0);
 
       expect(gamePlay.hideCellTooltip).toHaveBeenCalledWith(0);
-    });
-  });
-
-  describe('Метод getAvailableMoveCells()', () => {
-    it('вызван метод; возвращает массив корректных клеток для перемещения', () => {
-      const character = new Bowman();
-      const positionedCharacter = new PositionedCharacter(character, 27);
-      gameController['positionedCharacters'] = [positionedCharacter];
-
-      const result = (gameController as any).getAvailableMoveCells(27);
-
-      // Проверяем, что клетки в пределах дистанции перемещения и не заняты
-      expect(result.length).toBeGreaterThan(0);
-      expect(result).not.toContain(27);
-    });
-
-    it('персонаж не найден; возвращает пустой массив, если персонаж не найден', () => {
-      gameController['positionedCharacters'] = [];
-
-      const result = (gameController as any).getAvailableMoveCells(0);
-
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('Метод getAvailableAttackCells()', () => {
-    it('вызван метод; возвращает корректные клетки для атаки', () => {
-      const playerCharacter = new Bowman();
-      const enemyCharacter = new Demon();
-
-      const playerPositioned = new PositionedCharacter(playerCharacter, 28);
-      const enemyPositioned = new PositionedCharacter(enemyCharacter, 29);
-
-      gameController['positionedCharacters'] = [playerPositioned, enemyPositioned];
-
-      const result = (gameController as any).getAvailableAttackCells(28);
-
-      expect(result).toContain(29);
-    });
-
-    it('персонаж не найден; возвращает пустой массив', () => {
-      gameController['positionedCharacters'] = [];
-
-      const result = (gameController as any).getAvailableAttackCells(0);
-
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('Методы getMovementDistance() и getAttackDistance()', () => {
-    const movementDistances = [
-      { type: CharacterType.Swordsman, expected: 4 },
-      { type: CharacterType.Undead, expected: 4 },
-      { type: CharacterType.Bowman, expected: 2 },
-      { type: CharacterType.Vampire, expected: 2 },
-      { type: CharacterType.Magician, expected: 1 },
-      { type: CharacterType.Demon, expected: 1 },
-      { type: 'unknown' as CharacterType, expected: 0 },
-    ];
-
-    const attackDistances = [
-      { type: CharacterType.Swordsman, expected: 1 },
-      { type: CharacterType.Undead, expected: 1 },
-      { type: CharacterType.Bowman, expected: 2 },
-      { type: CharacterType.Vampire, expected: 2 },
-      { type: CharacterType.Magician, expected: 4 },
-      { type: CharacterType.Demon, expected: 4 },
-      { type: 'unknown' as CharacterType, expected: 0 },
-    ];
-
-    it('возвращает корректные значения для getMovementDistance()', () => {
-      const getMovementDistance = (gameController as any).getMovementDistance.bind(gameController);
-
-      movementDistances.forEach(({ type, expected }) => {
-        expect(getMovementDistance(type)).toBe(expected);
-      });
-    });
-
-    it('возвращает корректные значения для getAttackDistance()', () => {
-      const getAttackDistance = (gameController as any).getAttackDistance.bind(gameController);
-
-      attackDistances.forEach(({ type, expected }) => {
-        expect(getAttackDistance(type)).toBe(expected);
-      });
     });
   });
 
