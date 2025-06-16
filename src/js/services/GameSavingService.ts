@@ -1,7 +1,8 @@
+import PositionedCharacter from '../Game/PositionedCharacter';
 import GameState from '../Game/GameState';
 import GameStateService from './GameStateService';
 import GamePlay from '../Game/GamePlay';
-import PositionedCharacter from '../Game/PositionedCharacter';
+import AbstractService from './AbstractService';
 
 /**
  * Сервис для работы с сохранением и загрузкой состояния игры
@@ -13,12 +14,8 @@ import PositionedCharacter from '../Game/PositionedCharacter';
  * service.saveGame(characters, theme, false);
  * const success = service.loadGame();
  */
-export default class GameSavingService {
+export default class GameSavingService extends AbstractService {
   private stateService: GameStateService;
-  private gamePlay: GamePlay;
-  private gameState: GameState;
-  private positionedCharacters: PositionedCharacter[];
-  private currentTheme: GameState['currentTheme'];
   private gameOver: boolean;
 
   /**
@@ -30,11 +27,8 @@ export default class GameSavingService {
    * @param {GamePlay} gamePlay - Игровой компонент
    */
   constructor(stateService: GameStateService, gamePlay: GamePlay) {
+    super([], undefined, gamePlay, new GameState());
     this.stateService = stateService;
-    this.gamePlay = gamePlay;
-    this.gameState = new GameState();
-    this.positionedCharacters = [];
-    this.currentTheme = this.gameState.currentTheme;
     this.gameOver = false;
   }
 
@@ -52,11 +46,11 @@ export default class GameSavingService {
     isPlayerTurn: boolean
   ): void {
     try {
-      this.gameState.positionedCharacters = positionedCharacters;
-      this.gameState.currentTheme = currentTheme;
-      this.gameState.gameOver = gameOver;
-      this.gameState.isPlayerTurn = isPlayerTurn;
-      this.stateService.save(this.gameState);
+      this.gameState!.positionedCharacters = positionedCharacters;
+      this.gameState!.currentTheme = currentTheme;
+      this.gameState!.gameOver = gameOver;
+      this.gameState!.isPlayerTurn = isPlayerTurn;
+      this.stateService.save(this.gameState!);
 
       GamePlay.showMessage('Игра успешно сохранена');
     } catch (error) {
@@ -77,8 +71,8 @@ export default class GameSavingService {
       this.currentTheme = loadedState.currentTheme;
       this.gameOver = loadedState.gameOver;
 
-      this.gamePlay.drawUi(this.currentTheme);
-      this.gamePlay.redrawPositions(this.positionedCharacters);
+      this.gamePlay!.drawUi(this.currentTheme);
+      this.gamePlay!.redrawPositions(this.positionedCharacters);
 
       GamePlay.showMessage('Игра успешно загружена');
 
@@ -87,33 +81,6 @@ export default class GameSavingService {
       GamePlay.showError('Ошибка при загрузке игры');
       return false;
     }
-  }
-
-  /**
-   * Возвращает массив позиционированных персонажей
-   * 
-   * @returns {PositionedCharacter[]} - массив позиционированных персонажей
-   */
-  getPositionedCharacters(): PositionedCharacter[] {
-    return this.positionedCharacters;
-  }
-
-  /**
-   * Возвращает текущее состояние игры
-   * 
-   * @returns {GameState} - текущее состояние игры в формате GameState
-   */
-  getGameState(): GameState {
-    return this.gameState;
-  }
-
-  /**
-   * Возвращает текущую тему игры
-   * 
-   * @returns {GameState['currentTheme']} - текущая тема игры
-   */
-  getCurrentTheme(): GameState['currentTheme'] {
-    return this.currentTheme;
   }
 
   /**

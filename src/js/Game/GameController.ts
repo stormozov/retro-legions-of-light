@@ -45,22 +45,22 @@ export default class GameController implements IGameController {
   }
 
   private updateComputerTurnExecutorPositionedCharacters(): void {
-    this.computerTurnExecutor.setPositionedCharacters(this.positionedCharacters);
+    this.computerTurnExecutor.positionedCharacters = this.positionedCharacters;
   }
 
   init(): void {
     // Отрисовываем доску и кнопки управления.
     this.currentTheme = Theme.Prairie;
-    this.levelTransitionService.setCurrentTheme(this.currentTheme);
+    this.levelTransitionService.currentTheme = this.currentTheme;
     this.gamePlay.drawUi(this.currentTheme);
 
     // Генерируем и отрисовываем расположение команд на доске.
     this.positionedCharacters = TeamPositioner.generateAndPositionTeams();
-    this.levelTransitionService.setPositionedCharacters(this.positionedCharacters);
-    this.levelTransitionService.setCurrentTheme(this.currentTheme);
+    this.levelTransitionService.positionedCharacters = this.positionedCharacters;
+    this.levelTransitionService.currentTheme = this.currentTheme;
     this.gamePlay.redrawPositions(this.positionedCharacters);
 
-    this.characterActionService.setPositionedCharacters(this.positionedCharacters);
+    this.characterActionService.positionedCharacters = this.positionedCharacters;
 
     // Показываем подсказки при наведении курсора мыши на ячейку с персонажем.
     this.showBriefInfo();
@@ -276,10 +276,10 @@ export default class GameController implements IGameController {
 
     // Обновляем массив positionedCharacters, заменяя старую позицию новой
     this.positionedCharacters = this.positionedCharacters.map((pc) =>
-      pc === characterPosition ? updatedPositionedCharacter : pc
+      (pc === characterPosition) ? updatedPositionedCharacter : pc
     );
 
-    this.characterActionService.setPositionedCharacters(this.positionedCharacters);
+    this.characterActionService.positionedCharacters = this.positionedCharacters;
 
     // Обновляем отображение персонажей
     this.gamePlay.redrawPositions(this.positionedCharacters);
@@ -350,7 +350,7 @@ export default class GameController implements IGameController {
       (pc) => pc !== targetPosition
     );
 
-    this.characterActionService.setPositionedCharacters(this.positionedCharacters);
+    this.characterActionService.positionedCharacters = this.positionedCharacters;
 
     this.gamePlay.redrawPositions(this.positionedCharacters);
 
@@ -362,9 +362,9 @@ export default class GameController implements IGameController {
       this.levelTransitionService.startNewLevel();
 
       // Обновляем текущую тему и список позиционированных персонажей
-      this.currentTheme = this.levelTransitionService.getCurrentTheme();
-      this.positionedCharacters = this.levelTransitionService.getPositionedCharacters();
-      this.characterActionService.setPositionedCharacters(this.positionedCharacters);
+      this.currentTheme = this.levelTransitionService.currentTheme;
+      this.positionedCharacters = this.levelTransitionService.positionedCharacters;
+      this.characterActionService.positionedCharacters = this.positionedCharacters;
     }
 
     // Если персонажи игрока закончились, игра окончена.
@@ -415,21 +415,21 @@ export default class GameController implements IGameController {
   private handleLoadGame(): void {
     const success = this.savingService.loadGame();
     if (success) {
-      this.gameState = this.savingService.getGameState();
-      this.positionedCharacters = this.savingService.getPositionedCharacters();
-      this.characterActionService.setPositionedCharacters(this.positionedCharacters);
-      this.currentTheme = this.savingService.getCurrentTheme();
+      this.gameState = this.savingService.gameState;
+      this.positionedCharacters = this.savingService.positionedCharacters;
+      this.characterActionService.positionedCharacters = this.positionedCharacters;
+      this.currentTheme = this.savingService.currentTheme;
       this.gameOver = this.savingService.isGameOver();
 
       // Обновляем позиционированные персонажи и текущую тему
-      this.levelTransitionService.setPositionedCharacters(this.positionedCharacters);
-      this.levelTransitionService.setCurrentTheme(this.currentTheme);
+      this.levelTransitionService.positionedCharacters = this.positionedCharacters;
+      this.levelTransitionService.currentTheme = this.currentTheme;
 
       // Обновляем ссылку на gameState в ComputerTurnExecutor
-      this.computerTurnExecutor.setGameState(this.gameState);
+      this.computerTurnExecutor.gameState = this.gameState;
 
       // Обновляем ссылку на positionedCharacters в ComputerTurnExecutor
-      this.computerTurnExecutor.setPositionedCharacters(this.positionedCharacters);
+      this.computerTurnExecutor.positionedCharacters = this.positionedCharacters;
     }
   }
 }

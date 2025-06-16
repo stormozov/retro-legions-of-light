@@ -14,9 +14,9 @@ import PositionedCharacter from './PositionedCharacter';
  * Класс ComputerTurnExecutor предоставляет методы для выполнения хода компьютера.
  */
 export default class ComputerTurnExecutor {
-  private positionedCharacters: PositionedCharacter[];
-  private gamePlay: GamePlay;
-  private gameState: GameState;
+  private _positionedCharacters: PositionedCharacter[];
+  private _gamePlay: GamePlay;
+  private _gameState: GameState;
   private isComputerTurnInProgress: boolean = false;
 
   // Вспомогательные методы из класса GameController
@@ -45,9 +45,9 @@ export default class ComputerTurnExecutor {
     moveCharacterToCell: (characterPosition: PositionedCharacter, targetIndex: number) => Promise<void>,
     performAttack: (attackerPosition: PositionedCharacter, targetPosition: PositionedCharacter) => Promise<void>
   ) {
-    this.positionedCharacters = positionedCharacters;
-    this.gamePlay = gamePlay;
-    this.gameState = gameState;
+    this._positionedCharacters = positionedCharacters;
+    this._gamePlay = gamePlay;
+    this._gameState = gameState;
     this.getAvailableAttackCells = getAvailableAttackCells;
     this.getAvailableMoveCells = getAvailableMoveCells;
     this.moveCharacterToCell = moveCharacterToCell;
@@ -58,8 +58,12 @@ export default class ComputerTurnExecutor {
    * Обновляет ссылку на состояние игры.
    * @param {GameState} gameState - Новый объект состояния игры.
    */
-  public setGameState(gameState: GameState): void {
-    this.gameState = gameState;
+  public set gameState(gameState: GameState) {
+    this._gameState = gameState;
+  }
+
+  public get gameState(): GameState {
+    return this._gameState;
   }
 
   /**
@@ -218,7 +222,16 @@ export default class ComputerTurnExecutor {
    *
    * @param {PositionedCharacter[]} positionedCharacters - Массив позиционированных персонажей.
    */
-  public setPositionedCharacters(positionedCharacters: PositionedCharacter[]): void {
-    this.positionedCharacters = positionedCharacters;
+  public set positionedCharacters(positionedCharacters: PositionedCharacter[]) {
+    this._positionedCharacters = positionedCharacters;
+  }
+
+  /**
+   * Возвращает массив позиционированных персонажей.
+   *
+   * @returns {PositionedCharacter[]} - Массив позиционированных персонажей.
+   */
+  public get positionedCharacters(): PositionedCharacter[] {
+    return this._positionedCharacters;
   }
 }

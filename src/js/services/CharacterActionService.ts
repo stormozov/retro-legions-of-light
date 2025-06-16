@@ -1,24 +1,14 @@
 import PositionedCharacter from '../Game/PositionedCharacter';
 import { CharacterType } from '../types/enums';
 import { findCharacterByIndex, isPlayerCharacter } from '../utils/utils';
+import AbstractService from './AbstractService';
 
 /**
  * Класс CharacterActionService предоставляет методы для получения доступных клеток для хода или атаки персонажа.
  */
-export default class CharacterActionService {
-  private positionedCharacters: PositionedCharacter[];
-
+export default class CharacterActionService extends AbstractService {
   constructor(positionedCharacters: PositionedCharacter[]) {
-    this.positionedCharacters = positionedCharacters;
-  }
-
-  /**
-   * Устанавливает массив позиционированных персонажей.
-   *
-   * @param {PositionedCharacter[]} positionedCharacters - Массив позиционированных персонажей.
-   */
-  setPositionedCharacters(positionedCharacters: PositionedCharacter[]): void {
-    this.positionedCharacters = positionedCharacters;
+    super(positionedCharacters);
   }
 
   /**

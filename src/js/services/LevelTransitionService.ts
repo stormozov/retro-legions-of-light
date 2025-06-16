@@ -6,26 +6,19 @@ import TeamPositioner from '../Game/TeamPositioner';
 import { Theme } from '../types/enums';
 import { ILevelTransitionService } from '../types/interfaces';
 import { isPlayerCharacter } from '../utils/utils';
+import AbstractService from './AbstractService';
 
 /**
  * Класс LevelTransitionService предоставляет методы для перехода к следующему уровню игры.
  */
-export default class LevelTransitionService implements ILevelTransitionService {
-  private positionedCharacters: PositionedCharacter[];
-  private currentTheme: Theme;
-  private gamePlay: GamePlay;
-  private gameState: GameState;
-
+export default class LevelTransitionService extends AbstractService implements ILevelTransitionService {
   constructor(
     positionedCharacters: PositionedCharacter[],
     currentTheme: Theme,
     gamePlay: GamePlay,
     gameState: GameState
   ) {
-    this.positionedCharacters = positionedCharacters;
-    this.currentTheme = currentTheme;
-    this.gamePlay = gamePlay;
-    this.gameState = gameState;
+    super(positionedCharacters, currentTheme, gamePlay, gameState);
   }
 
   /**
@@ -48,15 +41,18 @@ export default class LevelTransitionService implements ILevelTransitionService {
     // Генерируем и позиционируем новую команду противника в колонках 6 и 7
     const newOpponentTeam = TeamPositioner.generateAndPositionOpponentTeam();
 
-    // Validate opponent positions to ensure columns are 6 or 7
+    // Проверяем позиции противника, чтобы убедиться, что он был в пределах 6 и 7 столбцов
     const validOpponentTeam = newOpponentTeam.map((pc) => {
       const col = pc.position % TeamPositioner.boardSize;
+
       if (!TeamPositioner.opponentColumns.includes(col)) {
-        // Correct position by forcing column to 6 (or 7)
+        // Корректируем положение, сдвинув столбец на 6 (или 7) позиций
         const row = Math.floor(pc.position / TeamPositioner.boardSize);
         const correctedPosition = row * TeamPositioner.boardSize + TeamPositioner.opponentColumns[0];
+        
         return new PositionedCharacter(pc.character, correctedPosition);
       }
+
       return pc;
     });
 
@@ -68,15 +64,12 @@ export default class LevelTransitionService implements ILevelTransitionService {
       ...validOpponentTeam
     );
 
-    // Debug logging for opponent positions
-    console.log('Opponent positions after validation:', validOpponentTeam.map(pc => pc.position));
-
     // Обновляем UI
-    this.gamePlay.drawUi(this.currentTheme);
-    this.gamePlay.redrawPositions(this.positionedCharacters);
+    this.gamePlay!.drawUi(this.currentTheme!);
+    this.gamePlay!.redrawPositions(this.positionedCharacters);
 
     // Сбрасываем состояние игры
-    this.gameState.isPlayerTurn = true;
+    this.gameState!.isPlayerTurn = true;
   }
 
   /**
@@ -133,37 +126,5 @@ export default class LevelTransitionService implements ILevelTransitionService {
       character.attack = Math.round(Math.max(character.attack, character.attack * coefficient));
       character.defense = Math.round(Math.max(character.defense, character.defense * coefficient));
     }
-  }
-
-  /**
-   * Возвращает текущую тему карты.
-   * @returns {Theme} Текущая тема карты.
-   */
-  getCurrentTheme(): Theme {
-    return this.currentTheme;
-  }
-
-  /**
-   * Устанавливает текущую тему карты.
-   * @param {Theme} theme - Текущая тема карты.
-   */
-  setCurrentTheme(theme: Theme): void {
-    this.currentTheme = theme;
-  }
-
-  /**
-   * Возвращает расположение персонажей на карте.
-   * @returns {PositionedCharacter[]} Массив позиционных персонажей.
-   */
-  getPositionedCharacters(): PositionedCharacter[] {
-    return this.positionedCharacters;
-  }
-
-  /**
-   * Устанавливает расположение персонажей на карте.
-   * @param {PositionedCharacter[]} positionedCharacters Массив позиционных персонажей.
-   */
-  setPositionedCharacters(positionedCharacters: PositionedCharacter[]): void {
-    this.positionedCharacters = positionedCharacters;
   }
 }

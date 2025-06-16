@@ -32,12 +32,10 @@ export interface IGameController {
  * Интерфейс ILevelTransitionService описывает публичный API класса LevelTransitionService.
  */
 export interface ILevelTransitionService {
+  currentTheme: Theme;
+  positionedCharacters: PositionedCharacter[];
   startNewLevel(): void;
   advanceToNextTheme(): void;
   levelUpPlayerCharacters(): void;
   levelUpCharacter(character: Character): void;
-  getCurrentTheme(): Theme;
-  setCurrentTheme(theme: Theme): void;
-  getPositionedCharacters(): PositionedCharacter[];
-  setPositionedCharacters(positionedCharacters: PositionedCharacter[]): void;
 }
