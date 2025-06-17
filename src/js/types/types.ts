@@ -155,3 +155,15 @@ export type AttackerTargetPriority = {
  * @property {number} minDistance - Минимальное расстояние до цели.
  */
 export type OptimalMoveCell = { bestCell: number, minDistance: number }
+
+/**
+ * Тип, представляющий объект, содержащий информацию о статистике игрока.
+ */
+export type UserStatistic = {
+  playerDefeats: number;
+  enemiesKilled: number;
+  totalLevelsCompleted: number;
+  maxLevelReached: number;
+  saveUsageCount: number;
+  loadUsageCount: number;
+}
