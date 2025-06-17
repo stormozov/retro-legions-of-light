@@ -35,7 +35,7 @@ export default class GameController implements IGameController {
       this.gameState
     );
     this.characterActionService = new CharacterActionService(this.positionedCharacters);
-    this.statisticsService = new StatisticsService();
+    this.statisticsService = new StatisticsService(stateService);
     this.computerTurnExecutor = new ComputerTurnExecutor(
       this.positionedCharacters,
       this.gamePlay,

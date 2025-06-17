@@ -1,6 +1,6 @@
 import { Demon } from '../../Entities/Enemies';
 import { Bowman } from '../../Entities/Heroes';
-import { Theme, Cursor, CharacterType, CellHighlight } from '../../types/enums';
+import { Cursor, Theme } from '../../types/enums';
 import { formatCharacterInfo } from '../../utils/utils';
 import GameController from '../GameController';
 import GamePlay from '../GamePlay';
@@ -12,12 +12,45 @@ jest.mock('../GamePlay');
 jest.mock('../TeamPositioner');
 
 describe('Класс GameController', () => {
-  let gamePlay: GamePlay;
+  let gamePlay: jest.Mocked<GamePlay>;
   let stateService: any;
   let gameController: GameController;
 
   beforeEach(() => {
-    gamePlay = new GamePlay();
+    // Создаем полностью имитированный экземпляр GamePlay со всеми необходимыми методами, имитирующими работу
+    gamePlay = new GamePlay() as jest.Mocked<GamePlay>;
+    gamePlay.drawUi = jest.fn();
+    gamePlay.redrawPositions = jest.fn();
+    gamePlay.addCellEnterListener = jest.fn();
+    gamePlay.addCellLeaveListener = jest.fn();
+    gamePlay.addCellClickListener = jest.fn();
+    gamePlay.addNewGameListener = jest.fn();
+    gamePlay.addSaveGameListener = jest.fn();
+    gamePlay.addLoadGameListener = jest.fn();
+    gamePlay.selectCell = jest.fn();
+    gamePlay.deselectCell = jest.fn();
+    gamePlay.setCursor = jest.fn();
+    gamePlay.showCellTooltip = jest.fn();
+    gamePlay.hideCellTooltip = jest.fn();
+    gamePlay.animateHealthChange = jest.fn().mockResolvedValue(undefined);
+    gamePlay.showDamage = jest.fn().mockResolvedValue(undefined);
+
+    // Мокаем статический метод showError и showMessage
+    GamePlay.showError = jest.fn();
+    GamePlay.showMessage = jest.fn();
+
+    // Создаем полностью имитированный экземпляр GameState
+    stateService = {
+      load: jest.fn().mockReturnValue({
+        statistics: {
+          playerDefeats: 0,
+          enemiesKilled: 0,
+          totalLevelsCompleted: 0,
+        },
+      }),
+      save: jest.fn(),
+    };
+
     gameController = new GameController(gamePlay, stateService);
   });
 
@@ -56,49 +89,49 @@ describe('Класс GameController', () => {
       gameController['gameState'] = GameState.from({ isPlayerTurn: true });
 
       // Мокаем статический метод showError
-      GamePlay.showError = jest.fn();
+      (GamePlay.showError as jest.Mock).mockClear();
     });
 
-    it('клик по пустой ячейке; ничего не происходит', () => {
+    it('клик по пустой ячейке; ничего не происходит', async () => {
       gameController['positionedCharacters'] = [];
 
-      gameController.onCellClick(0);
+      await gameController.onCellClick(0);
 
       expect(GamePlay.showError).not.toHaveBeenCalled();
       expect(gamePlay.deselectCell).not.toHaveBeenCalled();
       expect(gamePlay.selectCell).not.toHaveBeenCalled();
     });
 
-    it('клик по уже выделенной ячейке; ничего не происходит', () => {
+    it('клик по уже выделенной ячейке; ничего не происходит', async () => {
       gameController['positionedCharacters'] = [playerPositioned];
       gameController['selectedCellIndex'] = 1;
 
-      gameController.onCellClick(1);
+      await gameController.onCellClick(1);
 
       expect(GamePlay.showError).not.toHaveBeenCalled();
       expect(gamePlay.deselectCell).not.toHaveBeenCalled();
       expect(gamePlay.selectCell).not.toHaveBeenCalled();
     });
 
-    it('выбран персонаж; должен выделить выбранную ячейку', () => {
+    it('выбран персонаж; должен выделить выбранную ячейку', async () => {
       gameController['positionedCharacters'] = [playerPositioned];
       gameController['selectedCellIndex'] = null;
 
-      gameController.onCellClick(1);
+      await gameController.onCellClick(1);
 
       expect(GamePlay.showError).not.toHaveBeenCalled();
       expect(gamePlay.selectCell).toHaveBeenCalledWith(1);
       expect(gameController['selectedCellIndex']).toBe(1);
     });
 
-    it('перевыбран активный персонаж; должен поменять выделенную ячейку', () => {
+    it('перевыбран активный персонаж; должен поменять выделенную ячейку', async () => {
       const anotherPlayer = new Bowman();
       const anotherPositioned = new PositionedCharacter(anotherPlayer, 3);
 
       gameController['positionedCharacters'] = [playerPositioned, anotherPositioned];
       gameController['selectedCellIndex'] = 1;
 
-      gameController.onCellClick(3);
+      await gameController.onCellClick(3);
 
       expect(GamePlay.showError).not.toHaveBeenCalled();
       expect(gamePlay.deselectCell).toHaveBeenCalledWith(1);
@@ -106,9 +139,9 @@ describe('Класс GameController', () => {
       expect(gameController['selectedCellIndex']).toBe(3);
     });
 
-    it('клик во время хода ПК; выбрасывает исключение', () => {
+    it('клик во время хода ПК; выбрасывает исключение', async () => {
       gameController['gameState'] = GameState.from({ isPlayerTurn: false });
-      gameController.onCellClick(1);
+      await gameController.onCellClick(1);
       expect(GamePlay.showError).toHaveBeenCalledWith('Сейчас ход компьютера');
     });
 
@@ -178,7 +211,7 @@ describe('Класс GameController', () => {
       gamePlay.deselectCell = jest.fn();
     });
 
-    it('должен покрыть обе ветви тернарного оператора в moveCharacterToCell', () => {
+    it('должен покрыть обе ветви тернарного оператора в moveCharacterToCell', async () => {
       const anotherCharacter = new Bowman();
       const anotherPositioned = new PositionedCharacter(anotherCharacter, 8);
 
@@ -186,7 +219,7 @@ describe('Класс GameController', () => {
       gameController['selectedCellIndex'] = 1;
 
       const newPosition = 9;
-      (gameController as any).moveCharacterToCell(playerPositioned, newPosition);
+      await (gameController as any).moveCharacterToCell(playerPositioned, newPosition);
 
       // Проверяем, что старый PositionedCharacter заменен
       const foundOld = gameController['positionedCharacters'].find((pc) => pc === playerPositioned);

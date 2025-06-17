@@ -1,12 +1,13 @@
-import { Theme, CharacterType } from '../types/enums';
-import PositionedCharacter from './PositionedCharacter';
 import Character from '../Entities/Character';
-import Bowman from '../Entities/Heroes/Bowman';
-import Swordsman from '../Entities/Heroes/Swordsman';
-import Magician from '../Entities/Heroes/Magician';
 import Demon from '../Entities/Enemies/Demon';
 import Undead from '../Entities/Enemies/Undead';
 import Vampire from '../Entities/Enemies/Vampire';
+import Bowman from '../Entities/Heroes/Bowman';
+import Magician from '../Entities/Heroes/Magician';
+import Swordsman from '../Entities/Heroes/Swordsman';
+import { CharacterType, Theme } from '../types/enums';
+import { UserStatistic } from '../types/types';
+import PositionedCharacter from './PositionedCharacter';
 
 /**
  * Класс GameState представляет состояние игры.
@@ -17,6 +18,7 @@ export default class GameState {
   selectedCellIndex: number | null;
   currentTheme: Theme;
   gameOver: boolean;
+  statistics: UserStatistic;
 
   constructor() {
     this.isPlayerTurn = true;
@@ -24,6 +26,14 @@ export default class GameState {
     this.selectedCellIndex = null;
     this.currentTheme = Theme.Prairie;
     this.gameOver = false;
+    this.statistics = {
+      playerDefeats: 0,
+      enemiesKilled: 0,
+      totalLevelsCompleted: 0,
+      maxLevelReached: 0,
+      saveUsageCount: 0,
+      loadUsageCount: 0,
+    };
   }
 
   /**
@@ -50,6 +60,17 @@ export default class GameState {
       state.positionedCharacters = [];
     }
 
+    if (object.statistics) {
+      state.statistics = {
+        playerDefeats: object.statistics.playerDefeats ?? 0,
+        enemiesKilled: object.statistics.enemiesKilled ?? 0,
+        totalLevelsCompleted: object.statistics.totalLevelsCompleted ?? 0,
+        maxLevelReached: object.statistics.maxLevelReached ?? 0,
+        saveUsageCount: object.statistics.saveUsageCount ?? 0,
+        loadUsageCount: object.statistics.loadUsageCount ?? 0,
+      };
+    }
+
     return state;
   }
 
@@ -73,6 +94,7 @@ export default class GameState {
       })),
       currentTheme: this.currentTheme,
       gameOver: this.gameOver,
+      statistics: this.statistics,
     };
   }
 

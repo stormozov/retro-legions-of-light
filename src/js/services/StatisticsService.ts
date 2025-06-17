@@ -1,4 +1,7 @@
+
 import { UserStatistic } from '../types/types';
+import GameStateService from './GameStateService';
+import GameState from '../Game/GameState';
 
 /**
  * Сервис для хранения и управления статистикой игры.
@@ -11,57 +14,25 @@ export default class StatisticsService {
   private saveUsageCount: number;
   private loadUsageCount: number;
 
-  constructor() {
-    this.playerDefeats = 0;
-    this.enemiesKilled = 0;
-    this.totalLevelsCompleted = 0;
-    this.maxLevelReached = 0;
-    this.saveUsageCount = 0;
-    this.loadUsageCount = 0;
-  }
+  private gameStateService: GameStateService;
+  private gameState: GameState;
 
   /**
-   * Увеличивает количество поражений игрока.
+   * Создает экземпляр класса StatisticsService.
+   * 
+   * @param {GameStateService} gameStateService - Сервис для работы с состоянием игры.
    */
-  incrementPlayerDefeats(): void {
-    this.playerDefeats += 1;
-  }
+  constructor(gameStateService: GameStateService) {
+    this.gameStateService = gameStateService;
+    this.gameState = this.gameStateService.load();
 
-  /**
-   * Увеличивает количество убитых врагов.
-   */
-  incrementEnemiesKilled(): void {
-    this.enemiesKilled += 1;
-  }
-
-  /**
-   * Увеличивает количество завершенных уровней за все время игры.
-   */
-  incrementTotalLevelsCompleted(): void {
-    this.totalLevelsCompleted += 1;
-  }
-
-  /**
-   * Обновляет максимально достигнутый уровень.
-   */
-  updateMaxLevelReached(level: number): void {
-    if (level > this.maxLevelReached) {
-      this.maxLevelReached = level;
-    }
-  }
-
-  /**
-   * Увеличивает количество использований кнопки сохранения.
-   */
-  incrementSaveUsage(): void {
-    this.saveUsageCount += 1;
-  }
-
-  /**
-   * Увеличивает количество использований кнопки загрузки.
-   */
-  incrementLoadUsage(): void {
-    this.loadUsageCount += 1;
+    const stats = this.gameState.statistics;
+    this.playerDefeats = stats.playerDefeats;
+    this.enemiesKilled = stats.enemiesKilled;
+    this.totalLevelsCompleted = stats.totalLevelsCompleted;
+    this.maxLevelReached = stats.maxLevelReached;
+    this.saveUsageCount = stats.saveUsageCount;
+    this.loadUsageCount = stats.loadUsageCount;
   }
 
   /**
@@ -69,7 +40,7 @@ export default class StatisticsService {
    * 
    * @returns {UserStatistic} - Объект, содержащий статистику игры.
    */
-  getStats(): UserStatistic {
+  get stats(): UserStatistic {
     return {
       playerDefeats: this.playerDefeats,
       enemiesKilled: this.enemiesKilled,
@@ -78,5 +49,64 @@ export default class StatisticsService {
       saveUsageCount: this.saveUsageCount,
       loadUsageCount: this.loadUsageCount,
     };
+  }
+
+  /**
+   * Сохраняет статистику игры в localStorage.
+   * @private
+   */
+  private saveStatistics(): void {
+    this.gameState.statistics = this.stats;
+    this.gameStateService.save(this.gameState);
+  }
+
+  /**
+   * Увеличивает количество поражений игрока.
+   */
+  incrementPlayerDefeats(): void {
+    this.playerDefeats += 1;
+    this.saveStatistics();
+  }
+
+  /**
+   * Увеличивает количество убитых врагов.
+   */
+  incrementEnemiesKilled(): void {
+    this.enemiesKilled += 1;
+    this.saveStatistics();
+  }
+
+  /**
+   * Увеличивает количество завершенных уровней за все время игры.
+   */
+  incrementTotalLevelsCompleted(): void {
+    this.totalLevelsCompleted += 1;
+    this.saveStatistics();
+  }
+
+  /**
+   * Обновляет максимально достигнутый уровень.
+   */
+  updateMaxLevelReached(level: number): void {
+    if (level > this.maxLevelReached) {
+      this.maxLevelReached = level;
+      this.saveStatistics();
+    }
+  }
+
+  /**
+   * Увеличивает количество использований кнопки сохранения.
+   */
+  incrementSaveUsage(): void {
+    this.saveUsageCount += 1;
+    this.saveStatistics();
+  }
+
+  /**
+   * Увеличивает количество использований кнопки загрузки.
+   */
+  incrementLoadUsage(): void {
+    this.loadUsageCount += 1;
+    this.saveStatistics();
   }
 }
