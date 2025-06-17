@@ -8,6 +8,8 @@ import PositionedCharacter from '../Game/PositionedCharacter';
  * - `1`: Срединная позиция (не первая и не последняя в строке/столбце)
  * - `2`: Крайняя конечная позиция (последняя строка/последний столбец)
  * 
+ * @type FieldCellEdgeType
+ * 
  * @example
  * Для поля 8x8:
  * - Левый край: колонка 0 → тип 0
@@ -17,31 +19,32 @@ import PositionedCharacter from '../Game/PositionedCharacter';
 export type FieldCellEdgeType = 0 | 1 | 2;
 
 /**
-* Представляет позицию фигуры на доске.
-*/
-export type FigurePositionInBoard = {
-  position: number;
-  character: { type: string; health: number; };
-};
-
-/**
 * Тип для функции слушателя события ячейки.
+* 
+* @type CellEventListener
 * @param index - Индекс ячейки.
 */
 export type CellEventListener = (index: number) => void;
 
 /**
 * Тип для функции слушателя события игры.
+* 
+* @type GameActionListener
+* @param index - Индекс ячейки.
 */
 export type GameActionListener = () => void;
 
 /**
  * Тип для уровня персонажа.
+ * 
+ * @type CharacterLevel
  */
 export type CharacterLevel = 1 | 2 | 3 | 4;
 
 /**
  * Возможные свойства класса персонажа.
+ * 
+ * @type PossibleCharacterSetAttributes
  */
 export type PossibleCharacterSetAttributes = {
   level?: CharacterLevel;
@@ -57,6 +60,8 @@ export type AbstractClassErrorType = 'CONSTRUCTOR' | 'ABSTRACT' | 'METHOD';
 
 /**
  * Тип позиционированного персонажа или null.
+ * 
+ * @type PositionedCharacterOrNull
  */
 export type PositionedCharacterOrNull = PositionedCharacter | null;
 
@@ -124,7 +129,7 @@ export type ComputerAndPlayerCharacters = {
  * Содержит информацию об атакующем персонаже, его цели и приоритете атаки.
  * Приоритет определяет очерёдность атаки: чем ниже число, тем раньше происходит атака.
  * 
- * @interface AttackerTargetPriority
+ * @type AttackerTargetPriority
  * @property {PositionedCharacter} attacker - Атакующий персонаж с координатами
  * @property {PositionedCharacter} target - Цель атаки с координатами
  * @property {number} priority - Приоритет атаки (меньшее число = выше приоритет)
@@ -141,3 +146,12 @@ export type AttackerTargetPriority = {
   target: PositionedCharacter;
   priority: number;
 };
+
+/**
+ * Тип, представляющий объект, содержащий информацию об оптимальной ячейке для перемещения.
+ *
+ * @type OptimalMoveCell
+ * @property {number} bestCell - Индекс оптимальной ячейки.
+ * @property {number} minDistance - Минимальное расстояние до цели.
+ */
+export type OptimalMoveCell = { bestCell: number, minDistance: number }

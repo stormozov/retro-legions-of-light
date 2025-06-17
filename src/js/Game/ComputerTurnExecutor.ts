@@ -3,6 +3,7 @@ import {
   AttackerWithTargets,
   ComputerAndPlayerCharacters,
   foundBestMove,
+  OptimalMoveCell,
   PositionedCharacterOrNull,
   selectedBestAttackerAndTarget
 } from '../types/types';
@@ -65,6 +66,24 @@ export default class ComputerTurnExecutor {
 
   public get gameState(): GameState {
     return this._gameState;
+  }
+
+  /**
+   * Устанавливает массив позиционированных персонажей.
+   *
+   * @param {PositionedCharacter[]} positionedCharacters - Массив позиционированных персонажей.
+   */
+  public set positionedCharacters(positionedCharacters: PositionedCharacter[]) {
+    this._positionedCharacters = positionedCharacters;
+  }
+
+  /**
+   * Возвращает массив позиционированных персонажей.
+   *
+   * @returns {PositionedCharacter[]} - Массив позиционированных персонажей.
+   */
+  public get positionedCharacters(): PositionedCharacter[] {
+    return this._positionedCharacters;
   }
 
   /**
@@ -195,13 +214,13 @@ export default class ComputerTurnExecutor {
   }
 
   /**
-   * Находит лучшее перемещение для компьютерного персонажа.
-   *
-   * @param {PositionedCharacter[]} computerCharacters - Массив компьютерных персонажей.
-   * @param {PositionedCharacter[]} playerCharacters - Массив игровых персонажей.
-   * 
-   * @returns {foundBestMove} - Объект с более подходящим атакующим и ячейкой для перемещения.
-   */
+ * Находит лучшее перемещение для компьютерного персонажа с использованием манхэттенского расстояния.
+ *
+ * @param {PositionedCharacter[]} computerCharacters - Массив компьютерных персонажей.
+ * @param {PositionedCharacter[]} playerCharacters - Массив игровых персонажей.
+ * 
+ * @returns {foundBestMove} - Объект с более подходящим атакующим и ячейкой для перемещения.
+ */
   private findBestMove(
     computerCharacters: PositionedCharacter[],
     playerCharacters: PositionedCharacter[]
@@ -210,34 +229,88 @@ export default class ComputerTurnExecutor {
     let bestAttacker: PositionedCharacterOrNull = null;
     let bestTargetMoveCell: number | null = null;
 
-    for (const attackerPosition of computerCharacters) {
-      const moveCells = this.getAvailableMoveCells(attackerPosition.position);
+    for (const attacker of computerCharacters) {
+      const moveCells = this.getAvailableMoveCells(attacker.position);
       if (moveCells.length === 0) continue;
 
-      const nearestPlayer = playerCharacters.reduce((nearest, pc) => {
-        const distNearest = Math.abs(nearest.position - attackerPosition.position);
-        const distCurrent = Math.abs(pc.position - attackerPosition.position);
-        return (distCurrent < distNearest) ? pc : nearest;
-      }, playerCharacters[0]);
+      // 1. Находим ближайшего врага
+      const nearestEnemy = this.findNearestEnemy(attacker, playerCharacters);
 
-      let targetMoveCell = moveCells[0];
-      let minDistance = Math.abs(moveCells[0] - nearestPlayer.position);
-      for (const cell of moveCells) {
-        const distance = Math.abs(cell - nearestPlayer.position);
-        if (distance < minDistance) {
-          minDistance = distance;
-          targetMoveCell = cell;
-        }
-      }
+      // 2. Находим оптимальную клетку для перемещения к этому врагу
+      const bestMoveResult = this.findOptimalMoveCell(nearestEnemy, moveCells);
 
-      if (minDistance < bestDistance) {
-        bestDistance = minDistance;
-        bestAttacker = attackerPosition;
-        bestTargetMoveCell = targetMoveCell;
+      // 3. Обновляем лучший результат если нашли лучшее перемещение
+      if (bestMoveResult.minDistance < bestDistance) {
+        bestDistance = bestMoveResult.minDistance;
+        bestAttacker = attacker;
+        bestTargetMoveCell = bestMoveResult.bestCell;
       }
     }
 
     return { bestAttacker, bestTargetMoveCell };
+  }
+
+  /**
+   * Находит ближайшего врага для атакующего персонажа
+   * 
+   * @param {PositionedCharacter} attacker - Атакующий персонаж.
+   * @param {PositionedCharacter[]} enemies - Массив врагов.
+   * 
+   * @returns {PositionedCharacter} - Ближайший враг.
+   */
+  private findNearestEnemy(
+    attacker: PositionedCharacter,
+    enemies: PositionedCharacter[]
+  ): PositionedCharacter {
+    return enemies.reduce((nearest, enemy) => {
+      const currentDist = this.manhattanDistance(attacker.position, enemy.position);
+      const nearestDist = this.manhattanDistance(attacker.position, nearest.position);
+      return currentDist < nearestDist ? enemy : nearest;
+    }, enemies[0]);
+  }
+
+  /**
+   * Находит оптимальную клетку для перемещения к цели
+   * 
+   * @param {PositionedCharacter} target - Цель атаки.
+   * @param {number[]} availableCells - Массив доступных клеток.
+   * 
+   * @returns {OptimalMoveCell} - Наиболее подходящая клетка и ее манхэттенское расстояние.
+   */
+  private findOptimalMoveCell(
+    target: PositionedCharacter,
+    availableCells: number[]
+  ): OptimalMoveCell {
+    let bestCell = availableCells[0];
+    let minDistance = this.manhattanDistance(bestCell, target.position);
+
+    for (const cell of availableCells) {
+      const distance = this.manhattanDistance(cell, target.position);
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestCell = cell;
+      }
+    }
+
+    return { bestCell, minDistance };
+  }
+
+  /**
+   * Вычисляет манхэттенское расстояние между двумя ячейками игрового поля.
+   * 
+   * @param {number} index1 - Индекс первой ячейки (0-63).
+   * @param {number} index2 - Индекс второй ячейки (0-63).
+   * 
+   * @returns {number} - Манхэттенское расстояние между ячейками.
+   */
+  private manhattanDistance(index1: number, index2: number): number {
+    const row1 = Math.floor(index1 / 8);
+    const col1 = index1 % 8;
+
+    const row2 = Math.floor(index2 / 8);
+    const col2 = index2 % 8;
+
+    return Math.abs(row1 - row2) + Math.abs(col1 - col2);
   }
 
   /**
@@ -265,23 +338,5 @@ export default class ComputerTurnExecutor {
   private updateGameState(): void {
     this.gameState.isPlayerTurn = true;
     this.isComputerTurnInProgress = false;
-  }
-
-  /**
-   * Устанавливает массив позиционированных персонажей.
-   *
-   * @param {PositionedCharacter[]} positionedCharacters - Массив позиционированных персонажей.
-   */
-  public set positionedCharacters(positionedCharacters: PositionedCharacter[]) {
-    this._positionedCharacters = positionedCharacters;
-  }
-
-  /**
-   * Возвращает массив позиционированных персонажей.
-   *
-   * @returns {PositionedCharacter[]} - Массив позиционированных персонажей.
-   */
-  public get positionedCharacters(): PositionedCharacter[] {
-    return this._positionedCharacters;
   }
 }
