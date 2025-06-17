@@ -1,7 +1,9 @@
 import {
+  AttackerTargetPriority,
   AttackerWithTargets,
   ComputerAndPlayerCharacters,
   foundBestMove,
+  OptimalMoveCell,
   PositionedCharacterOrNull,
   selectedBestAttackerAndTarget
 } from '../types/types';
@@ -67,6 +69,24 @@ export default class ComputerTurnExecutor {
   }
 
   /**
+   * Устанавливает массив позиционированных персонажей.
+   *
+   * @param {PositionedCharacter[]} positionedCharacters - Массив позиционированных персонажей.
+   */
+  public set positionedCharacters(positionedCharacters: PositionedCharacter[]) {
+    this._positionedCharacters = positionedCharacters;
+  }
+
+  /**
+   * Возвращает массив позиционированных персонажей.
+   *
+   * @returns {PositionedCharacter[]} - Массив позиционированных персонажей.
+   */
+  public get positionedCharacters(): PositionedCharacter[] {
+    return this._positionedCharacters;
+  }
+
+  /**
    * Выполняет ход компьютера.
    */
   async execute(): Promise<void> {
@@ -121,37 +141,86 @@ export default class ComputerTurnExecutor {
   }
 
   /**
-   * Выбирает лучшего атакующего и цель для атаки.
+   * Вычисляет приоритет атаки для пары атакующего и цели.
    *
-   * @param {AttackerWithTargets[]} attackersWithTargets - Массив компьютерных персонажей с 
-   * доступными целями для атаки.
-   * @returns {selectedBestAttackerAndTarget | null} - Лучший атакующий и цель для атаки или null, 
-   * если нет доступных целей.
+   * @param {PositionedCharacter} attacker - Атакующий персонаж.
+   * @param {PositionedCharacter} target - Цель атаки.
+   * 
+   * @returns {number} - Значение приоритета.
+   */
+  private calculateAttackPriority(
+    attacker: PositionedCharacter, 
+    target: PositionedCharacter
+  ): number {
+    const K1 = 0.6; // вес силы атаки
+    const K2 = -0.3; // приоритет слабых целей
+    const K3 = 1.0; // важность добивания
+    const K4 = 0.2; // штраф за расстояние
+
+    const attack = attacker.character.attack;
+    const enemyHealth = target.character.health;
+
+    // Оценка урона по цели
+    const damageToTarget = Math.max(attack - target.character.defense, attack * 0.1);
+
+    // Расстояние между атакующим и целью
+    const distance = Math.abs(attacker.position - target.position);
+
+    // Проверка, убивает ли атака цель (добивание)
+    const finishingMoveBonus = damageToTarget >= enemyHealth ? 10 : 0;
+
+    // Формула приоритета
+    const priority = (attack * K1) 
+      + (enemyHealth * K2) 
+      + (damageToTarget * K3) 
+      - (distance * K4) 
+      + finishingMoveBonus;
+
+    return priority;
+  }
+
+  /**
+   * Выбирает лучшего атакующего и цель для атаки с учетом новой системы приоритетов.
+   *
+   * @param {AttackerWithTargets[]} attackersWithTargets - Массив компьютерных 
+   * персонажей с доступными целями для атаки.
+   * 
+   * @returns {selectedBestAttackerAndTarget | null} - Лучший атакующий и цель для 
+   * атаки или null, если нет доступных целей.
    */
   private selectBestAttackerAndTarget(
     attackersWithTargets: AttackerWithTargets[]
   ): selectedBestAttackerAndTarget | null {
-    attackersWithTargets.sort((a, b) => {
-      const aMinHealth = Math.min(...a.attackTargets.map((t) => t.character.health));
-      const bMinHealth = Math.min(...b.attackTargets.map((t) => t.character.health));
-      return aMinHealth - bMinHealth;
-    });
+    if (attackersWithTargets.length === 0) return null;
 
-    const { attacker, attackTargets } = attackersWithTargets[0];
-    attackTargets.sort((a, b) => a.character.health - b.character.health);
-    const targetPosition = attackTargets[0];
+    // Массив для хранения всех пар атакующий-цель с их приоритетами
+    const attackerTargetPriorities: AttackerTargetPriority[] = [];
 
-    return { attacker, targetPosition };
+    // Заполняем массив приоритетов
+    for (const { attacker, attackTargets } of attackersWithTargets) {
+      for (const target of attackTargets) {
+        const priority = this.calculateAttackPriority(attacker, target);
+        attackerTargetPriorities.push({ attacker, target, priority });
+      }
+    }
+
+    // Сортируем по убыванию приоритета
+    attackerTargetPriorities.sort((a, b) => b.priority - a.priority);
+
+    // Выбираем пару с максимальным приоритетом
+    const best = attackerTargetPriorities[0];
+
+    return { attacker: best.attacker, targetPosition: best.target };
   }
 
   /**
-   * Находит лучшее перемещение для компьютерного персонажа.
-   *
-   * @param {PositionedCharacter[]} computerCharacters - Массив компьютерных персонажей.
-   * @param {PositionedCharacter[]} playerCharacters - Массив игровых персонажей.
-   * 
-   * @returns {foundBestMove} - Объект с более подходящим атакующим и ячейкой для перемещения.
-   */
+ * Находит лучшее перемещение для компьютерного персонажа с использованием манхэттенского расстояния.
+ *
+ * @param {PositionedCharacter[]} computerCharacters - Массив компьютерных персонажей.
+ * @param {PositionedCharacter[]} playerCharacters - Массив игровых персонажей.
+ * 
+ * @returns {foundBestMove} - Объект с более подходящим атакующим и ячейкой для перемещения.
+ */
   private findBestMove(
     computerCharacters: PositionedCharacter[],
     playerCharacters: PositionedCharacter[]
@@ -160,34 +229,88 @@ export default class ComputerTurnExecutor {
     let bestAttacker: PositionedCharacterOrNull = null;
     let bestTargetMoveCell: number | null = null;
 
-    for (const attackerPosition of computerCharacters) {
-      const moveCells = this.getAvailableMoveCells(attackerPosition.position);
+    for (const attacker of computerCharacters) {
+      const moveCells = this.getAvailableMoveCells(attacker.position);
       if (moveCells.length === 0) continue;
 
-      const nearestPlayer = playerCharacters.reduce((nearest, pc) => {
-        const distNearest = Math.abs(nearest.position - attackerPosition.position);
-        const distCurrent = Math.abs(pc.position - attackerPosition.position);
-        return (distCurrent < distNearest) ? pc : nearest;
-      }, playerCharacters[0]);
+      // 1. Находим ближайшего врага
+      const nearestEnemy = this.findNearestEnemy(attacker, playerCharacters);
 
-      let targetMoveCell = moveCells[0];
-      let minDistance = Math.abs(moveCells[0] - nearestPlayer.position);
-      for (const cell of moveCells) {
-        const distance = Math.abs(cell - nearestPlayer.position);
-        if (distance < minDistance) {
-          minDistance = distance;
-          targetMoveCell = cell;
-        }
-      }
+      // 2. Находим оптимальную клетку для перемещения к этому врагу
+      const bestMoveResult = this.findOptimalMoveCell(nearestEnemy, moveCells);
 
-      if (minDistance < bestDistance) {
-        bestDistance = minDistance;
-        bestAttacker = attackerPosition;
-        bestTargetMoveCell = targetMoveCell;
+      // 3. Обновляем лучший результат если нашли лучшее перемещение
+      if (bestMoveResult.minDistance < bestDistance) {
+        bestDistance = bestMoveResult.minDistance;
+        bestAttacker = attacker;
+        bestTargetMoveCell = bestMoveResult.bestCell;
       }
     }
 
     return { bestAttacker, bestTargetMoveCell };
+  }
+
+  /**
+   * Находит ближайшего врага для атакующего персонажа
+   * 
+   * @param {PositionedCharacter} attacker - Атакующий персонаж.
+   * @param {PositionedCharacter[]} enemies - Массив врагов.
+   * 
+   * @returns {PositionedCharacter} - Ближайший враг.
+   */
+  private findNearestEnemy(
+    attacker: PositionedCharacter,
+    enemies: PositionedCharacter[]
+  ): PositionedCharacter {
+    return enemies.reduce((nearest, enemy) => {
+      const currentDist = this.manhattanDistance(attacker.position, enemy.position);
+      const nearestDist = this.manhattanDistance(attacker.position, nearest.position);
+      return currentDist < nearestDist ? enemy : nearest;
+    }, enemies[0]);
+  }
+
+  /**
+   * Находит оптимальную клетку для перемещения к цели
+   * 
+   * @param {PositionedCharacter} target - Цель атаки.
+   * @param {number[]} availableCells - Массив доступных клеток.
+   * 
+   * @returns {OptimalMoveCell} - Наиболее подходящая клетка и ее манхэттенское расстояние.
+   */
+  private findOptimalMoveCell(
+    target: PositionedCharacter,
+    availableCells: number[]
+  ): OptimalMoveCell {
+    let bestCell = availableCells[0];
+    let minDistance = this.manhattanDistance(bestCell, target.position);
+
+    for (const cell of availableCells) {
+      const distance = this.manhattanDistance(cell, target.position);
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestCell = cell;
+      }
+    }
+
+    return { bestCell, minDistance };
+  }
+
+  /**
+   * Вычисляет манхэттенское расстояние между двумя ячейками игрового поля.
+   * 
+   * @param {number} index1 - Индекс первой ячейки (0-63).
+   * @param {number} index2 - Индекс второй ячейки (0-63).
+   * 
+   * @returns {number} - Манхэттенское расстояние между ячейками.
+   */
+  private manhattanDistance(index1: number, index2: number): number {
+    const row1 = Math.floor(index1 / 8);
+    const col1 = index1 % 8;
+
+    const row2 = Math.floor(index2 / 8);
+    const col2 = index2 % 8;
+
+    return Math.abs(row1 - row2) + Math.abs(col1 - col2);
   }
 
   /**
@@ -215,23 +338,5 @@ export default class ComputerTurnExecutor {
   private updateGameState(): void {
     this.gameState.isPlayerTurn = true;
     this.isComputerTurnInProgress = false;
-  }
-
-  /**
-   * Устанавливает массив позиционированных персонажей.
-   *
-   * @param {PositionedCharacter[]} positionedCharacters - Массив позиционированных персонажей.
-   */
-  public set positionedCharacters(positionedCharacters: PositionedCharacter[]) {
-    this._positionedCharacters = positionedCharacters;
-  }
-
-  /**
-   * Возвращает массив позиционированных персонажей.
-   *
-   * @returns {PositionedCharacter[]} - Массив позиционированных персонажей.
-   */
-  public get positionedCharacters(): PositionedCharacter[] {
-    return this._positionedCharacters;
   }
 }
