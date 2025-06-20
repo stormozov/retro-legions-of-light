@@ -14,6 +14,7 @@ export default class GamePlay {
   private newGameEl: HTMLElement | null;
   private saveGameEl: HTMLElement | null;
   private loadGameEl: HTMLElement | null;
+  private statsGameEl: HTMLElement | null;
 
   private cellClickListeners: CellEventListener[];
   private cellEnterListeners: CellEventListener[];
@@ -21,6 +22,7 @@ export default class GamePlay {
   private newGameListeners: GameActionListener[];
   private saveGameListeners: GameActionListener[];
   private loadGameListeners: GameActionListener[];
+  private statsGameListeners: GameActionListener[];
 
   constructor() {
     this.boardSize = 8;
@@ -30,6 +32,7 @@ export default class GamePlay {
     this.newGameEl = null;
     this.saveGameEl = null;
     this.loadGameEl = null;
+    this.statsGameEl = null;
 
     this.cellClickListeners = [];
     this.cellEnterListeners = [];
@@ -37,6 +40,7 @@ export default class GamePlay {
     this.newGameListeners = [];
     this.saveGameListeners = [];
     this.loadGameListeners = [];
+    this.statsGameListeners = [];
   }
 
   bindToDOM(container: HTMLElement): void {
@@ -56,6 +60,7 @@ export default class GamePlay {
             <button data-id="action-restart" class="btn">Новая игра</button>
             <button data-id="action-save" class="btn">Сохранить</button>
             <button data-id="action-load" class="btn">Загрузить</button>
+            <button data-id="action-stats" class="btn">Статистика</button>
         </div>
         <div class="board-container">
             <div data-id="board" class="board"></div>
@@ -65,10 +70,12 @@ export default class GamePlay {
     this.newGameEl = this.container!.querySelector('[data-id=action-restart]');
     this.saveGameEl = this.container!.querySelector('[data-id=action-save]');
     this.loadGameEl = this.container!.querySelector('[data-id=action-load]');
+    this.statsGameEl = this.container!.querySelector('[data-id=action-stats]');
 
     this.newGameEl!.addEventListener('click', (event) => this.onNewGameClick(event));
     this.saveGameEl!.addEventListener('click', (event) => this.onSaveGameClick(event));
     this.loadGameEl!.addEventListener('click', (event) => this.onLoadGameClick(event));
+    this.statsGameEl!.addEventListener('click', (event) => this.onStatsClick(event));
 
     this.boardEl = this.container!.querySelector('[data-id=board]') as HTMLDivElement;
     this.boardEl.classList.add(theme);
@@ -170,6 +177,15 @@ export default class GamePlay {
     this.loadGameListeners.push(callback);
   }
 
+  /**
+   * Добавляет прослушиватель для нажатия кнопки "Статистика".
+   *
+   * @param callback
+   */
+  addStatsGameListener(callback: GameActionListener): void {
+    this.statsGameListeners.push(callback);
+  }
+
   private onCellEnter(event: MouseEvent): void {
     event.preventDefault();
     const index = this.cells.indexOf(event.currentTarget as HTMLDivElement);
@@ -200,6 +216,11 @@ export default class GamePlay {
   private onLoadGameClick(event: Event): void {
     event.preventDefault();
     this.loadGameListeners.forEach((o) => o.call(null));
+  }
+
+  private onStatsClick(event: Event): void {
+    event.preventDefault();
+    this.statsGameListeners.forEach((o) => o.call(null));
   }
 
   static showError(message: string): void {

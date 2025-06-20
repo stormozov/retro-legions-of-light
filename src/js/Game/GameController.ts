@@ -2,8 +2,10 @@ import CharacterActionService from '../services/CharacterActionService';
 import GameSavingService from '../services/GameSavingService';
 import GameStateService from '../services/GameStateService';
 import LevelTransitionService from '../services/LevelTransitionService';
+import StatisticsService from '../services/StatisticsService';
 import { CellHighlight, Cursor, Theme } from '../types/enums';
 import { IGameController } from '../types/interfaces';
+import StatisticsModal from '../ui/StatisticsModal';
 import { findCharacterByIndex, formatCharacterInfo, isPlayerCharacter } from '../utils/utils';
 import ComputerTurnExecutor from './ComputerTurnExecutor';
 import GamePlay from './GamePlay';
@@ -22,6 +24,8 @@ export default class GameController implements IGameController {
   private levelTransitionService: LevelTransitionService;
   private computerTurnExecutor: ComputerTurnExecutor;
   private characterActionService: CharacterActionService;
+  private statisticsService: StatisticsService;
+  private statisticsModal: StatisticsModal;
 
   constructor(gamePlay: GamePlay, stateService: GameStateService) {
     this.gamePlay = gamePlay;
@@ -33,6 +37,8 @@ export default class GameController implements IGameController {
       this.gameState
     );
     this.characterActionService = new CharacterActionService(this.positionedCharacters);
+    this.statisticsService = new StatisticsService(stateService);
+    this.statisticsModal = new StatisticsModal(this.statisticsService);
     this.computerTurnExecutor = new ComputerTurnExecutor(
       this.positionedCharacters,
       this.gamePlay,
@@ -77,6 +83,9 @@ export default class GameController implements IGameController {
     // Подписываемся на кнопку "Save Game" и "Load Game"
     this.gamePlay.addSaveGameListener(this.handleSaveGame.bind(this));
     this.gamePlay.addLoadGameListener(this.handleLoadGame.bind(this));
+
+    // Подписываемся на кнопку "Статистика" для открытия модального окна
+    this.gamePlay.addStatsGameListener(() => this.statisticsModal.open());
   }
 
   /**
@@ -365,6 +374,16 @@ export default class GameController implements IGameController {
       this.currentTheme = this.levelTransitionService.currentTheme;
       this.positionedCharacters = this.levelTransitionService.positionedCharacters;
       this.characterActionService.positionedCharacters = this.positionedCharacters;
+
+      // Обновляем статистику по завершению уровня
+      this.statisticsService.incrementTotalLevelsCompleted();
+
+      // Обновляем статистику максимального достигнутого уровня
+      const playerCharacters = this.positionedCharacters.filter((pc) => isPlayerCharacter(pc));
+      if (playerCharacters.length > 0) {
+        const firstPlayerLevel = playerCharacters[0].character.level;
+        this.statisticsService.updateMaxLevelReached(firstPlayerLevel);
+      }
     }
 
     // Если персонажи игрока закончились, игра окончена.
@@ -372,6 +391,14 @@ export default class GameController implements IGameController {
     if ( playerCharacters.length === 0 ) {
       this.gameOver = true;
       GamePlay.showMessage('Вы проиграли! Все ваши персонажи были выведены из игры. Игра окончена.');
+
+      // Обновляем статистику по проигрышам игрока
+      this.statisticsService.incrementPlayerDefeats();
+    }
+
+    // Обновляем статистику по убитым персонажам противника
+    if (!isPlayerCharacter(targetPosition)) {
+      this.statisticsService.incrementEnemiesKilled();
     }
 
     // Обновляем positionedCharacters в ComputerTurnExecutor
@@ -402,6 +429,9 @@ export default class GameController implements IGameController {
       this.gameOver,
       this.gameState.isPlayerTurn
     );
+
+    // Обновляем статистику по использованию кнопки сохранений
+    this.statisticsService.incrementSaveUsage();
   }
 
   /**
@@ -430,6 +460,9 @@ export default class GameController implements IGameController {
 
       // Обновляем ссылку на positionedCharacters в ComputerTurnExecutor
       this.computerTurnExecutor.positionedCharacters = this.positionedCharacters;
+
+      // Обновляем статистику по использованию кнопки загрузки
+      this.statisticsService.incrementLoadUsage();
     }
   }
 }
