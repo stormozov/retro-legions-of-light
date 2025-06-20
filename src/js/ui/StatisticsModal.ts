@@ -55,7 +55,21 @@ export default class StatisticsModal {
    */
   private closeStatsModal(): void {
     if (!this.statsModal) return;
-    this.statsModal.classList.remove(this.modalActiveClass);
+
+    // Если уже закрывается, ничего не делаем
+    if (this.statsModal.classList.contains('closing')) return;
+
+    // Добавляем закрывающий класс для запуска анимации
+    this.statsModal.classList.add('closing');
+
+    // Дожидаемся завершения анимации, чтобы удалить активные и закрывающие классы
+    const onAnimationEnd = () => {
+      this.statsModal.classList.remove(this.modalActiveClass);
+      this.statsModal.classList.remove('closing');
+      this.statsModal.removeEventListener('animationend', onAnimationEnd);
+    };
+
+    this.statsModal.addEventListener('animationend', onAnimationEnd);
   }
 
   /**

@@ -14,10 +14,18 @@
 
   font-family: Arial, Helvetica, sans-serif;
 
+  opacity: 0;
+  transition: opacity 0.4s ease;
   cursor: pointer;
 
   &.active {
     display: block;
+    opacity: 1;
+    animation: fadeInOverlay 0.4s ease forwards;
+  }
+
+  &.closing {
+    animation: fadeOutOverlay 0.4s ease forwards;
   }
 
   &__content {
@@ -29,7 +37,16 @@
     max-width: 90%;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 
+    opacity: 0;
+    transform: translateY(-20px);
+    animation: fadeInContent 0.4s ease forwards;
+    animation-delay: 0.1s;
     cursor: auto;
+  }
+
+  &.closing &__content {
+    animation: fadeOutContent 0.4s ease forwards;
+    animation-delay: 0s;
   }
 }
 
