@@ -111,3 +111,22 @@ export function findCharacterByIndex(
 export function isPlayerCharacter(positionedCharacter: PositionedCharacter): boolean {
   return playerCharacterTypes.includes(positionedCharacter.character.type);
 }
+
+/**
+ * Переводит ключ метрики на русский язык с пробелами.
+ * 
+ * @param {string} key - Ключ метрики на английском языке.
+ * @returns {string} Перевод ключа на русский язык с пробелами.
+ */
+export function translateMetricName(key: string): string {
+  const mapping: Record<string, string> = {
+    playerDefeats: 'Поражения игрока',
+    enemiesKilled: 'Убито врагов',
+    totalLevelsCompleted: 'Завершено уровней',
+    maxLevelReached: 'Максимальный уровень',
+    saveUsageCount: 'Использовано сохранений',
+    loadUsageCount: 'Использовано загрузок',
+  };
+  
+  return mapping[key] || key;
+}

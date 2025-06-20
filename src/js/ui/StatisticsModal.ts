@@ -1,4 +1,5 @@
 import StatisticsService from '../services/StatisticsService';
+import { translateMetricName } from '../utils/utils';
 
 /**
  * Класс для работы с модальным окном статистики игры.
@@ -77,7 +78,7 @@ export default class StatisticsModal {
       statItem.className = 'user-stats-modal__stat-item';
       
       const statName = document.createElement('span');
-      statName.textContent = key;
+      statName.textContent = translateMetricName(key);
       
       const statValue = document.createElement('span');
       statValue.textContent = String(value);
