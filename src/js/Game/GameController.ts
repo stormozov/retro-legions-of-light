@@ -267,7 +267,7 @@ export default class GameController implements IGameController {
 
   onCellLeave(index: number): void {
     this.gamePlay.setCursor(Cursor.NotAllowed);
-    this.gamePlay.deselectCell(index);
+    if (this.selectedCellIndex !== index) this.gamePlay.deselectCell(index);
     this.gamePlay.hideCellTooltip(index);
   }
 
