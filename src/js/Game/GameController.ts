@@ -1,3 +1,4 @@
+import characterData from '../data/characters.json';
 import CharacterActionService from '../services/CharacterActionService';
 import GameSavingService from '../services/GameSavingService';
 import GameStateService from '../services/GameStateService';
@@ -67,6 +68,9 @@ export default class GameController implements IGameController {
     this.gamePlay.redrawPositions(this.positionedCharacters);
 
     this.characterActionService.positionedCharacters = this.positionedCharacters;
+
+    // Загружаем хар-ки персонажей компьютера в локальное хранилище
+    this.setUpAICharacterBaseStats();
 
     // Показываем подсказки при наведении курсора мыши на ячейку с персонажем.
     this.showBriefInfo();
@@ -464,5 +468,18 @@ export default class GameController implements IGameController {
       // Обновляем статистику по использованию кнопки загрузки
       this.statisticsService.incrementLoadUsage();
     }
+  }
+
+  /**
+   * Загружает базовые данные о характеристиках персонажей компьютера в локальное
+   * хранилище.
+   */
+  private setUpAICharacterBaseStats() {
+    const aiCharacterStats = {
+      demon: { level: 1, ...characterData.characters.demon },
+      vampire: { level: 1, ...characterData.characters.vampire },
+      undead: { level: 1, ...characterData.characters.undead },
+    };
+    localStorage.setItem('aiCharacterStats', JSON.stringify(aiCharacterStats));
   }
 }

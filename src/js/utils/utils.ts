@@ -130,3 +130,15 @@ export function translateMetricName(key: string): string {
   
   return mapping[key] || key;
 }
+
+/**
+ * Генерирует случайный множитель по базовому значению и вариации.
+ * 
+ * @param {number} base - базовое значение.
+ * @param {number} variance - расхождение.
+ * 
+ * @returns {number} случайный множитель.
+ */
+export function getRandomMultiplier(base: number, variance: number): number {
+  return base + (Math.random() * variance * 2) - variance;
+};
