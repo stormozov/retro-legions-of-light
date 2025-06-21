@@ -5,13 +5,16 @@ import PositionedCharacter from '../Game/PositionedCharacter';
 import TeamPositioner from '../Game/TeamPositioner';
 import { Theme } from '../types/enums';
 import { ILevelTransitionService } from '../types/interfaces';
-import { isPlayerCharacter } from '../utils/utils';
+import { getRandomMultiplier, isPlayerCharacter } from '../utils/utils';
 import AbstractService from './AbstractService';
 
 /**
  * Класс LevelTransitionService предоставляет методы для перехода к следующему уровню игры.
  */
-export default class LevelTransitionService extends AbstractService implements ILevelTransitionService {
+export default class LevelTransitionService 
+  extends AbstractService 
+  implements ILevelTransitionService {
+  
   constructor(
     positionedCharacters: PositionedCharacter[],
     currentTheme: Theme,
@@ -40,6 +43,8 @@ export default class LevelTransitionService extends AbstractService implements I
 
     // Генерируем и позиционируем новую команду противника в колонках 6 и 7
     const newOpponentTeam = TeamPositioner.generateAndPositionOpponentTeam();
+
+    this.levelUpAICharacters(newOpponentTeam);
 
     // Проверяем позиции противника, чтобы убедиться, что он был в пределах 6 и 7 столбцов
     const validOpponentTeam = newOpponentTeam.map((pc) => {
@@ -97,19 +102,24 @@ export default class LevelTransitionService extends AbstractService implements I
    * Увеличивает уровень персонажей игрока.
    */
   levelUpPlayerCharacters(): void {
-    for ( const pc of this.positionedCharacters ) {
-      if ( isPlayerCharacter(pc) ) {
+    for (const pc of this.positionedCharacters) {
+      if (isPlayerCharacter(pc)) {
         this.levelUpCharacter(pc.character);
       }
     }
   }
 
+  levelUpAICharacters(characters: PositionedCharacter[]): void {
+    for (const pc of characters) this.levelUpAICharacter(pc.character);
+  }
+
   /**
-   * Увеличивает уровень указанного персонажа и обновляет его характеристики.
+   * Увеличивает уровень указанного персонажа игрока и обновляет его характеристики.
+   * 
    * @param {Character} character - Персонаж, уровень которого нужно увеличить.
    */
   levelUpCharacter(character: Character): void {
-    if ( character.health > 0 ) {
+    if (character.health > 0) {
       // Увеличиваем уровень персонажа на 1
       character.level += 1;
 
@@ -125,6 +135,72 @@ export default class LevelTransitionService extends AbstractService implements I
       // Math.max(attackBefore, attackBefore * (80 + life) / 100)
       character.attack = Math.round(Math.max(character.attack, character.attack * coefficient));
       character.defense = Math.round(Math.max(character.defense, character.defense * coefficient));
+    }
+  }
+
+  /**
+   * Увеличивает уровень указанного персонажа компьютера и обновляет его характеристики.
+   * 
+   * @param {Character} character - Персонаж, уровень которого нужно увеличить.
+   */
+  levelUpAICharacter(character: Character): void {
+    const localStorageKey = 'aiCharacterStats';
+
+    // Загружаем уровень и характеристики персонажа из localStorage
+    this.loadAICharacterStats(character, localStorageKey);
+
+    // Изменяем характеристики персонажа
+    character.level += 1;
+    character.attack = Math.round(
+      Math.max(character.attack, character.attack * getRandomMultiplier(1.7, 0.6))
+    );
+    character.defense = Math.round(
+      Math.max(character.defense, character.defense * getRandomMultiplier(1.5, 0.4))
+    );
+
+    // Обновляем уровень и характеристики персонажа в localStorage
+    this.updateAICharacterStats(character, localStorageKey);
+  }
+
+  /**
+   * Загружает уровень и характеристики персонажа компьютера из localStorage.
+   * 
+   * @param {Character} character - Персонаж, уровень и характеристики которого нужно загрузить.
+   * @param {string} localStorageKey - Ключ в localStorage, из которого нужно загрузить данные.
+   */
+  private loadAICharacterStats(character: Character, localStorageKey: string): void {
+    const aiCharacterStatsRaw = localStorage.getItem(localStorageKey);
+    if (aiCharacterStatsRaw) {
+      const aiCharacterStats = JSON.parse(aiCharacterStatsRaw);
+      const typeKey = character.type.toLowerCase();
+      
+      if (aiCharacterStats[typeKey]) {
+        character.level = aiCharacterStats[typeKey].level;
+        character.attack = aiCharacterStats[typeKey].attack;
+        character.defense = aiCharacterStats[typeKey].defense;
+      }
+    }
+  }
+
+  /**
+   * Обновляет уровень и характеристики персонажа компьютера в localStorage.
+   * 
+   * @param {Character} character - Персонаж, уровень и характеристики которого нужно обновить.
+   * @param {string} localStorageKey - Ключ в localStorage, в котором нужно сохранить данные.
+   */
+  private updateAICharacterStats(character: Character, localStorageKey: string): void {
+    const aiCharacterStatsRawAfter = localStorage.getItem(localStorageKey);
+    if (aiCharacterStatsRawAfter) {
+      const aiCharacterStatsAfter = JSON.parse(aiCharacterStatsRawAfter);
+      const typeKey = character.type.toLowerCase();
+      
+      if (aiCharacterStatsAfter[typeKey]) {
+        aiCharacterStatsAfter[typeKey].level = character.level;
+        aiCharacterStatsAfter[typeKey].attack = character.attack;
+        aiCharacterStatsAfter[typeKey].defense = character.defense;
+
+        localStorage.setItem(localStorageKey, JSON.stringify(aiCharacterStatsAfter));
+      }
     }
   }
 }
