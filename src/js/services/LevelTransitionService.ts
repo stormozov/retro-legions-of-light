@@ -155,6 +155,9 @@ export default class LevelTransitionService
     // Увеличиваем уровень персонажа на 1
     character.level += 1;
 
+    // Если уровень больше 6, не увеличиваем атаку и защиту
+    if (character.level > 6) return;
+
     // Конфигурируем диапазоны множителей для атаки и защиты
     const attackMultiplier = getRandomMultiplier(1.7, 0.6);
     const defenseMultiplier = getRandomMultiplier(1.5, 0.4);
@@ -219,6 +222,9 @@ export default class LevelTransitionService
 
       // Устанавливаем здоровье на новое значение
       character.health = newHealth;
+
+      // Если уровень больше 6, не увеличиваем атаку и защиту
+      if (character.level > 6) return;
 
       // Вычисляем коэффициент увеличения характеристик на основе нового здоровья
       const coefficient = (80 + newHealth) / 100;
