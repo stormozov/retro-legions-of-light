@@ -14,6 +14,8 @@ import AbstractService from './AbstractService';
 export default class LevelTransitionService 
   extends AbstractService 
   implements ILevelTransitionService {
+
+  private readonly localStorageKey = 'aiCharacterStats';
   
   constructor(
     positionedCharacters: PositionedCharacter[],
@@ -109,8 +111,98 @@ export default class LevelTransitionService
     }
   }
 
+  /**
+   * Увеличивает уровень персонажей компьютера.
+   * 
+   * @param {PositionedCharacter[]} characters - Массив персонажей компьютера.
+   */
   levelUpAICharacters(characters: PositionedCharacter[]): void {
-    for (const pc of characters) this.levelUpAICharacter(pc.character);
+    // Загружаем данные из localStorage один раз
+    let aiCharacterStats = this.loadAICharacterStats();
+
+    // Если данные отсутствуют или некорректны, инициализируем пустой объект
+    if (!aiCharacterStats || typeof aiCharacterStats !== 'object') {
+      aiCharacterStats = {};
+    }
+
+    // Обновляем характеристики каждого персонажа
+    for (const pc of characters) {
+      this.levelUpAICharacter(pc.character, aiCharacterStats);
+    }
+
+    // Сохраняем обновленные данные в localStorage один раз
+    this.updateAICharacterStats(aiCharacterStats);
+  }
+
+  /**
+   * Увеличивает уровень указанного персонажа компьютера и обновляет его характеристики.
+   * 
+   * @param {Character} character - Персонаж, уровень которого нужно увеличить.
+   * @param {Record<string, any>} aiCharacterStats - Объект с данными персонажей из localStorage.
+   */
+  private levelUpAICharacter(character: Character, aiCharacterStats: Record<string, any>): void {
+    const typeKey = character.type.toLowerCase();
+
+    // Загружаем текущие характеристики из aiCharacterStats, если есть
+    const savedStats = aiCharacterStats[typeKey];
+
+    if (savedStats) {
+      character.level = savedStats.level;
+      character.attack = savedStats.attack;
+      character.defense = savedStats.defense;
+    }
+
+    // Увеличиваем уровень персонажа на 1
+    character.level += 1;
+
+    // Конфигурируем диапазоны множителей для атаки и защиты
+    const attackMultiplier = getRandomMultiplier(1.7, 0.6);
+    const defenseMultiplier = getRandomMultiplier(1.5, 0.4);
+
+    // Обновляем характеристики с учетом множителей, гарантируя, что значения не уменьшатся
+    character.attack = Math.round(Math.max(character.attack, character.attack * attackMultiplier));
+    character.defense = Math.round(Math.max(character.defense, character.defense * defenseMultiplier));
+
+    // Обновляем объект aiCharacterStats для сохранения
+    aiCharacterStats[typeKey] = {
+      level: character.level,
+      attack: character.attack,
+      defense: character.defense,
+    };
+  }
+
+  /**
+   * Загружает данные персонажей компьютера из localStorage.
+   * Добавлена обработка ошибок и валидация.
+   * 
+   * @returns {Record<string, any> | null} Объект с данными персонажей или null.
+   */
+  private loadAICharacterStats(): Record<string, any> | null {
+    try {
+      const raw = localStorage.getItem(this.localStorageKey);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+      if (typeof parsed !== 'object' || parsed === null) return null;
+
+      return parsed;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Сохраняет данные персонажей компьютера в localStorage.
+   * Добавлена обработка ошибок.
+   * 
+   * @param {Record<string, any>} aiCharacterStats - Объект с данными персонажей.
+   */
+  private updateAICharacterStats(aiCharacterStats: Record<string, any>): void {
+    try {
+      localStorage.setItem(this.localStorageKey, JSON.stringify(aiCharacterStats));
+    } catch (error) {
+      return;
+    }
   }
 
   /**
@@ -135,72 +227,6 @@ export default class LevelTransitionService
       // Math.max(attackBefore, attackBefore * (80 + life) / 100)
       character.attack = Math.round(Math.max(character.attack, character.attack * coefficient));
       character.defense = Math.round(Math.max(character.defense, character.defense * coefficient));
-    }
-  }
-
-  /**
-   * Увеличивает уровень указанного персонажа компьютера и обновляет его характеристики.
-   * 
-   * @param {Character} character - Персонаж, уровень которого нужно увеличить.
-   */
-  levelUpAICharacter(character: Character): void {
-    const localStorageKey = 'aiCharacterStats';
-
-    // Загружаем уровень и характеристики персонажа из localStorage
-    this.loadAICharacterStats(character, localStorageKey);
-
-    // Изменяем характеристики персонажа
-    character.level += 1;
-    character.attack = Math.round(
-      Math.max(character.attack, character.attack * getRandomMultiplier(1.7, 0.6))
-    );
-    character.defense = Math.round(
-      Math.max(character.defense, character.defense * getRandomMultiplier(1.5, 0.4))
-    );
-
-    // Обновляем уровень и характеристики персонажа в localStorage
-    this.updateAICharacterStats(character, localStorageKey);
-  }
-
-  /**
-   * Загружает уровень и характеристики персонажа компьютера из localStorage.
-   * 
-   * @param {Character} character - Персонаж, уровень и характеристики которого нужно загрузить.
-   * @param {string} localStorageKey - Ключ в localStorage, из которого нужно загрузить данные.
-   */
-  private loadAICharacterStats(character: Character, localStorageKey: string): void {
-    const aiCharacterStatsRaw = localStorage.getItem(localStorageKey);
-    if (aiCharacterStatsRaw) {
-      const aiCharacterStats = JSON.parse(aiCharacterStatsRaw);
-      const typeKey = character.type.toLowerCase();
-      
-      if (aiCharacterStats[typeKey]) {
-        character.level = aiCharacterStats[typeKey].level;
-        character.attack = aiCharacterStats[typeKey].attack;
-        character.defense = aiCharacterStats[typeKey].defense;
-      }
-    }
-  }
-
-  /**
-   * Обновляет уровень и характеристики персонажа компьютера в localStorage.
-   * 
-   * @param {Character} character - Персонаж, уровень и характеристики которого нужно обновить.
-   * @param {string} localStorageKey - Ключ в localStorage, в котором нужно сохранить данные.
-   */
-  private updateAICharacterStats(character: Character, localStorageKey: string): void {
-    const aiCharacterStatsRawAfter = localStorage.getItem(localStorageKey);
-    if (aiCharacterStatsRawAfter) {
-      const aiCharacterStatsAfter = JSON.parse(aiCharacterStatsRawAfter);
-      const typeKey = character.type.toLowerCase();
-      
-      if (aiCharacterStatsAfter[typeKey]) {
-        aiCharacterStatsAfter[typeKey].level = character.level;
-        aiCharacterStatsAfter[typeKey].attack = character.attack;
-        aiCharacterStatsAfter[typeKey].defense = character.defense;
-
-        localStorage.setItem(localStorageKey, JSON.stringify(aiCharacterStatsAfter));
-      }
     }
   }
 }
