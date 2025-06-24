@@ -1,4 +1,5 @@
 /* Стили модального окна */
+@use '../base/colors';
 
 #user-stats-modal {
   display: none; /* Скрыто по умолчанию */
@@ -71,10 +72,25 @@
     font-size: 1.2em;
 
     transition: all 0.6s ease;
-    cursor: pointer;
 
     &:hover {
       transform: rotate(360deg);
+    }
+  }
+
+  &__clear-button {
+    width: 100%;
+    background: none;
+    border: 1px solid #dbdbdb;
+
+    margin: 24px 0 0;
+
+    transition: all 0.6s ease;
+
+    &:hover {
+      background-color: colors.$color_2;
+      border: 1px solid colors.$color_2;
+      color: #ffffff;
     }
   }
 

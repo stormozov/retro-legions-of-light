@@ -9,6 +9,7 @@ export default class StatisticsModal {
   private statsModal: HTMLElement | null;
   private statsModalBody: HTMLElement | null;
   private statsModalCloseBtn: HTMLElement | null;
+  private clearStatsModalBtn: HTMLElement | null;
 
   private modalActiveClass = 'active';
 
@@ -23,6 +24,7 @@ export default class StatisticsModal {
     this.statsModal = document.getElementById('user-stats-modal');
     this.statsModalBody = this.statsModal.querySelector('.user-stats-modal__body');
     this.statsModalCloseBtn = this.statsModal.querySelector('.user-stats-modal__close-button');
+    this.clearStatsModalBtn = this.statsModal.querySelector('.user-stats-modal__clear-button');
 
     this.initEventListeners();
   }
@@ -37,6 +39,12 @@ export default class StatisticsModal {
     if (this.statsModal) {
       this.statsModal.addEventListener('click', (event) => {
         if (event.target === this.statsModal) this.closeStatsModal();
+      });
+    }
+    if (this.clearStatsModalBtn) {
+      this.clearStatsModalBtn.addEventListener('click', () => {
+        this.statisticsService.clearStatistics();
+        this.populateStatsModal();
       });
     }
   }
@@ -84,19 +92,39 @@ export default class StatisticsModal {
    */
   private populateStatsModal() {
     if (!this.statsModalBody) return;
+
     this.clearStatsModal();
-    const stats = this.statisticsService.stats;
-    
-    for (const [key, value] of Object.entries(stats)) {
+    this.switchClearStatsButtonVisibility();
+    this.drawStatsItemsModal();
+  }
+
+  /**
+   * Переключает видимость кнопки clearStatsModalBtn в зависимости от наличия статистики.
+   * @private
+   */
+  private switchClearStatsButtonVisibility(): void {
+    // Проверяем, нет ли в статистике пустых значений или значений, равны 0
+    const hasStats: boolean = this.statisticsService.hasSavedStatistics();
+
+    // Переключение видимости кнопки clearStatsModalBtn в зависимости от наличия статистики
+    this.clearStatsModalBtn.style.display = hasStats ? '' : 'none';
+  }
+
+  /**
+   * Отрисовывает все метрики статистики в модальном окне.
+   * @private
+   */
+  private drawStatsItemsModal(): void {
+    for (const [key, value] of Object.entries(this.statisticsService.stats)) {
       const statItem = document.createElement('div');
       statItem.className = 'user-stats-modal__stat-item';
-      
+
       const statName = document.createElement('span');
       statName.textContent = translateMetricName(key);
-      
+
       const statValue = document.createElement('span');
       statValue.textContent = String(value);
-      
+
       statItem.appendChild(statName);
       statItem.appendChild(statValue);
       this.statsModalBody.appendChild(statItem);

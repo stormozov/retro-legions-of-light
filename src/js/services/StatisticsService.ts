@@ -61,6 +61,35 @@ export default class StatisticsService {
   }
 
   /**
+   * Очищает всю статистику.
+   */
+  clearStatistics(): void {
+    const confirmEl = confirm('Вы уверены, что хотите очистить статистику? Это действие необратимо.');
+
+    if (confirmEl) {
+      // Очистка статистики
+      this.playerDefeats = 0;
+      this.enemiesKilled = 0;
+      this.totalLevelsCompleted = 0;
+      this.maxLevelReached = 0;
+      this.saveUsageCount = 0;
+      this.loadUsageCount = 0;
+
+      // Сохранение обновленной статистики
+      this.saveStatistics();
+    }
+  }
+
+  /**
+   * Проверяет, есть ли сохраненная статистика.
+   * 
+   * @returns {boolean} - true, если сохраненная статистика есть, иначе false.
+   */
+  hasSavedStatistics(): boolean {
+    return Object.values(this.stats).some((value) => value !== 0);
+  }
+
+  /**
    * Увеличивает количество поражений игрока.
    */
   incrementPlayerDefeats(): void {
