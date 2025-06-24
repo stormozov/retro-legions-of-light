@@ -33,20 +33,10 @@ export default class StatisticsModal {
    * Инициализирует обработчики событий для модального окна статистики игры.
    */
   private initEventListeners(): void {
-    if (this.statsModalCloseBtn) {
-      this.statsModalCloseBtn.addEventListener('click', () => this.closeStatsModal());
-    }
-    if (this.statsModal) {
-      this.statsModal.addEventListener('click', (event) => {
-        if (event.target === this.statsModal) this.closeStatsModal();
-      });
-    }
-    if (this.clearStatsModalBtn) {
-      this.clearStatsModalBtn.addEventListener('click', () => {
-        this.statisticsService.clearStatistics();
-        this.populateStatsModal();
-      });
-    }
+    this.handleCloseModalWithBtn();
+    this.handleCloseModalWithOverlay();
+    this.handleCloseModalWithEsc();
+    this.handleClearStatsBtn();
   }
 
   /**
@@ -56,6 +46,56 @@ export default class StatisticsModal {
     if (!this.statsModal) return;
     this.populateStatsModal();
     this.statsModal.classList.add(this.modalActiveClass);
+  }
+
+  /**
+   * Закрывает модальное окно статистики игры с помощью кнопки.
+   * @private
+   */
+  private handleCloseModalWithBtn(): void {
+    if (this.statsModalCloseBtn) {
+      this.statsModalCloseBtn.addEventListener('click', () => this.closeStatsModal());
+    }
+  }
+
+  /**
+   * Закрывает модальное окно статистики игры с помощью оверлея.
+   * @private
+   */
+  private handleCloseModalWithOverlay() {
+    if (this.statsModal) {
+      this.statsModal.addEventListener('click', (event) => {
+        if (event.target === this.statsModal) this.closeStatsModal();
+      });
+    }
+  }
+
+  /**
+   * Закрывает модальное окно статистики игры с помощью клавиши Escape.
+   * @private
+   */
+  private handleCloseModalWithEsc() {
+    if (this.statsModal) {
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && this.statsModal.classList.contains(this.modalActiveClass)) {
+          this.closeStatsModal();
+        }
+      });
+    }
+  }
+
+  /**
+   * Обрабатывает нажатие кнопки "Очистить статистику" в модальном окне статистики игры.
+   * @private
+   */
+  private handleClearStatsBtn() {
+    if (this.clearStatsModalBtn) {
+      this.clearStatsModalBtn.addEventListener('click', () => {
+        this.statisticsService.clearStatistics();
+        this.populateStatsModal();
+        setTimeout(() => this.closeStatsModal(), 250);
+      });
+    }
   }
 
   /**
