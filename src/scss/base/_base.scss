@@ -11,9 +11,31 @@ body {
   height: 100%;
   margin: 0;
   background: #000;
+
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
 }
 
 button {
   cursor: pointer;
+}
+
+.footer {
+  padding: 24px;
+  color: #ffffff;
+
+  .dev {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    &__copy {
+      margin: 0;
+    }
+
+    &__logo {
+      height: 24px;
+    }
+  }
 }

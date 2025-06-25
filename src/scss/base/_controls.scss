@@ -33,4 +33,9 @@
     background-color .15s ease-in-out,
     border-color .15s ease-in-out,
     box-shadow .15s ease-in-out;
+
+  &:hover {
+    color: colors.$color_1;
+    background-color: colors.$border-color_2;
+  }
 }
