@@ -1,21 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Retro Game</title>
+  <title>retro-legions-of-light | Retro Game</title>
 </head>
 <body>
   <div id="game-container"></div>
+
   <div id="user-stats-modal" class="user-stats-modal">
     <div id="user-stats-modal__content">
       <header class="user-stats-modal__header">
         <h2 class="user-stats-modal__title">📊 Ваша игровая статистика</h2>
         <button class="user-stats-modal__close-button">✖</button>
       </header>
+
       <div class="user-stats-modal__body"></div>
+
       <button class="btn user-stats-modal__clear-button">🗑️ Очистить статистику</button>
+    </div>
+  </div>
+
+  <div id="user-message-modal" class="user-message-modal">
+    <div id="user-message-modal__content" class="user-message-modal__content">
+      <header class="user-message-modal__header">
+        <h3 class="user-message-modal__title">Сообщение</h3>
+        <button class="user-message-modal__close-button">✖</button>
+      </header>
+      <div class="user-message-modal__body"></div>
     </div>
   </div>
 </body>

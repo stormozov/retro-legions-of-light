@@ -1,12 +1,15 @@
-import { calcHealthLevel, calcTileType } from '../utils/utils';
-import { 
-  CellEventListener, 
+import { CellHighlight, Cursor } from '../types/enums';
+import {
+  CellEventListener,
   GameActionListener,
 } from '../types/types';
+import MessageModal from '../ui/MessageModal';
+import { calcHealthLevel, calcTileType } from '../utils/utils';
 import PositionedCharacter from './PositionedCharacter';
-import { CellHighlight, Cursor } from '../types/enums';
 
 export default class GamePlay {
+  private messageModal: MessageModal;
+  
   private boardSize: number;
   private container: HTMLElement | null;
   private boardEl: HTMLElement | null;
@@ -24,7 +27,11 @@ export default class GamePlay {
   private loadGameListeners: GameActionListener[];
   private statsGameListeners: GameActionListener[];
 
+  private static messageModal: MessageModal = new MessageModal();
+
   constructor() {
+    this.messageModal = new MessageModal();
+    
     this.boardSize = 8;
     this.container = null;
     this.boardEl = null;
@@ -224,11 +231,11 @@ export default class GamePlay {
   }
 
   static showError(message: string): void {
-    alert(message);
+    this.messageModal.open(message);
   }
 
   static showMessage(message: string): void {
-    alert(message);
+    this.messageModal.open(message);
   }
 
   selectCell(index: number, color: CellHighlight = CellHighlight.Yellow): void {

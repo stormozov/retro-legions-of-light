@@ -394,7 +394,10 @@ export default class GameController implements IGameController {
     const playerCharacters = this.positionedCharacters.filter((pc) => isPlayerCharacter(pc));
     if ( playerCharacters.length === 0 ) {
       this.gameOver = true;
-      GamePlay.showMessage('Вы проиграли! Все ваши персонажи были выведены из игры. Игра окончена.');
+      GamePlay.showMessage(
+        'Не расстраивайся! Поражение — это лишь новая точка старта.' +
+        'Ты уже молодец, что попробовал. В следующий раз обязательно повезёт! 🎯'
+      );
 
       // Обновляем статистику по проигрышам игрока
       this.statisticsService.incrementPlayerDefeats();
