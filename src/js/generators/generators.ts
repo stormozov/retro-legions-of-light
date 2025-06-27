@@ -44,26 +44,31 @@ export function* characterGenerator(
  * Количество персонажей в команде - `characterCount`.
  * */
 export function generateTeam(
-  allowedTypes: { new(level: number): Character }[], 
-  maxLevel: number, 
+  allowedTypes: { new(level: number): Character }[],
+  maxLevel: number,
   characterCount: number
 ): Team {
   const team = new Team();
   const generator = characterGenerator(allowedTypes, maxLevel);
+  let magicianAdded = false;
+  let attempts = 0;
+  const MAX_ATTEMPTS = characterCount * 100; // Лимит попыток пропорционально размеру команды
 
   while (team.size < characterCount) {
-    const character = generator.next().value;
-    const instanceType = character.constructor.name;
-
-    if (instanceType === CharacterType.Magician) {
-      // Проверяем, что команда не содержит двух магов
-      const hasMagician = team.members.some(
-        (member) => member.constructor.name === CharacterType.Magician
-      );
-      if (!hasMagician) team.add(character);
-    } else {
-      team.add(character);
+    attempts++;
+    if (attempts > MAX_ATTEMPTS) {
+      throw new Error(`Превышен лимит попыток генерации команды после ${MAX_ATTEMPTS} попыток`);
     }
+
+    const character = generator.next().value;
+    const isMagician = character.constructor.name === CharacterType.Magician;
+
+    // Пропускаем мага, если он уже есть в команде
+    if (isMagician && magicianAdded) continue;
+
+    // Добавляем персонажа и обновляем флаг мага
+    team.add(character);
+    if (isMagician) magicianAdded = true;
   }
 
   return team;

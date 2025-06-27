@@ -22,16 +22,23 @@ export default class TeamPositioner {
    */
   static generateAndPositionTeams(): PositionedCharacter[] {
     // Создаем команду героев и команду врагов
-    const playerTeam = generateTeam(
-      heroTypes, 
-      TeamPositioner.maxLevel, 
-      TeamPositioner.playerCharacterCount
-    );
-    const opponentTeam = generateTeam(
-      enemyTypes, 
-      TeamPositioner.maxLevel, 
-      TeamPositioner.opponentCharacterCount
-    );
+    let playerTeam: Team;
+    let opponentTeam: Team;
+
+    try {
+      playerTeam = generateTeam(
+        heroTypes,
+        TeamPositioner.maxLevel,
+        TeamPositioner.playerCharacterCount
+      );
+      opponentTeam = generateTeam(
+        enemyTypes,
+        TeamPositioner.maxLevel,
+        TeamPositioner.opponentCharacterCount
+      );
+    } catch (e) {
+      window.location.reload();
+    }
 
     // Получаем случайные позиции для каждого персонажа
     const playerPositions = TeamPositioner.getRandomPositions(
