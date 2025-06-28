@@ -2,6 +2,7 @@ import enemyTypes from '../Entities/Enemies';
 import heroTypes from '../Entities/Heroes';
 import Team from '../Entities/Team';
 import { generateTeam } from '../generators/generators';
+import GamePlay from './GamePlay';
 import PositionedCharacter from './PositionedCharacter';
 
 /**
@@ -37,7 +38,8 @@ export default class TeamPositioner {
         TeamPositioner.opponentCharacterCount
       );
     } catch (e) {
-      window.location.reload();
+      GamePlay.showMessage('Ошибка при генерации команд. Попробуйте начать новую игру.');
+      return [];
     }
 
     // Получаем случайные позиции для каждого персонажа

@@ -1,6 +1,6 @@
 export default {
   preset: 'ts-jest',
   verbose: true,
-  testEnvironment: 'node',
+  testEnvironment: 'jsdom',
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
 };
