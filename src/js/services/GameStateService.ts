@@ -39,7 +39,7 @@ export default class GameStateService {
       
       return GameState.from(parsed);
     } catch (e) {
-      if ( e instanceof GameStateNotFoundError ) throw e;
+      if (e && typeof e === 'object' && 'name' in e && e.name === 'GameStateNotFoundError') throw e;
       throw new GameStateLoadError();
     }
   }
