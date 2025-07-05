@@ -76,16 +76,12 @@ describe('Класс GameStateService', () => {
       }
     });
 
-    it('stateString имеет значение false; должен вызывать ошибку GameStateNotFoundError', () => {
+    it('stateString имеет значение false; должен возвращать новый экземпляр GameState', () => {
       (storageMock.getItem as jest.Mock).mockReturnValue(null);
 
-      try {
-        service.load();
-        fail('Expected GameStateNotFoundError to be thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(Error);
-        expect(error.name).toBe('GameStateNotFoundError');
-      }
+      const result = service.load();
+
+      expect(result).toBeInstanceOf(GameState);
     });
   });
 });

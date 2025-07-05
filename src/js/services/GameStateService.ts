@@ -1,5 +1,5 @@
 import GameState from '../Game/GameState';
-import { GameStateNotFoundError, GameStateLoadError } from '../errors/GameStateErrors';
+import { GameStateLoadError, GameStateNotFoundError } from '../errors/GameStateErrors';
 
 /**
 * Класс GameStateService управляет сохранением и загрузкой состояния игры.
@@ -34,9 +34,9 @@ export default class GameStateService {
   load(): GameState {
     try {
       const stateString = this.storage.getItem('state');
-      if (!stateString) throw new GameStateNotFoundError();
+      if (!stateString) return new GameState();
       const parsed = JSON.parse(stateString);
-      
+
       return GameState.from(parsed);
     } catch (e) {
       if (e && typeof e === 'object' && 'name' in e && e.name === 'GameStateNotFoundError') throw e;
