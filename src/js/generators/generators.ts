@@ -46,10 +46,11 @@ export function* characterGenerator(
 export function generateTeam(
   allowedTypes: { new(level: number): Character }[],
   maxLevel: number,
-  characterCount: number
+  characterCount: number,
+  charGenerator: Function = characterGenerator
 ): Team {
   const team = new Team();
-  const generator = characterGenerator(allowedTypes, maxLevel);
+  const generator = charGenerator(allowedTypes, maxLevel);
   let magicianAdded = false;
   let attempts = 0;
   const MAX_ATTEMPTS = characterCount * 100; // Лимит попыток пропорционально размеру команды

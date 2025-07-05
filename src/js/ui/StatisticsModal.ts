@@ -22,9 +22,15 @@ export default class StatisticsModal {
     this.statisticsService = statisticsService;
 
     this.statsModal = document.getElementById('user-stats-modal');
-    this.statsModalBody = this.statsModal.querySelector('.user-stats-modal__body');
-    this.statsModalCloseBtn = this.statsModal.querySelector('.user-stats-modal__close-button');
-    this.clearStatsModalBtn = this.statsModal.querySelector('.user-stats-modal__clear-button');
+    if (this.statsModal) {
+      this.statsModalBody = this.statsModal.querySelector('.user-stats-modal__body');
+      this.statsModalCloseBtn = this.statsModal.querySelector('.user-stats-modal__close-button');
+      this.clearStatsModalBtn = this.statsModal.querySelector('.user-stats-modal__clear-button');
+    } else {
+      this.statsModalBody = null;
+      this.statsModalCloseBtn = null;
+      this.clearStatsModalBtn = null;
+    }
 
     this.initEventListeners();
   }

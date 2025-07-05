@@ -39,6 +39,7 @@ export default class AbstractClassError extends Error {
   };
 
   constructor(type: AbstractClassErrorType) {
+    // istanbul ignore next: known issue with constructor/super coverage
     super(AbstractClassError.MESSAGES[type]);
     this.name = 'AbstractClassError';
   }

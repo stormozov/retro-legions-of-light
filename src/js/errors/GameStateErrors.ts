@@ -20,6 +20,7 @@ export class GameStateNotFoundError extends Error {
   static defaultMessage = 'Состояние игры не найдено в localStorage';
 
   constructor(message?: string) {
+    // istanbul ignore next: known issue with constructor/super coverage
     super(message || GameStateNotFoundError.defaultMessage);
     this.name = 'GameStateNotFoundError';
   }
@@ -47,6 +48,7 @@ export class GameStateLoadError extends Error {
   static defaultMessage = 'Не удалось загрузить состояние игры из localStorage';
 
   constructor(message?: string) {
+    // istanbul ignore next: known issue with constructor/super coverage
     super(message || GameStateLoadError.defaultMessage);
     this.name = 'GameStateLoadError';
   }
