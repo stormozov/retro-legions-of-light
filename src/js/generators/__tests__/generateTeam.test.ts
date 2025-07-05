@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import enemyTypes from '../../Entities/Enemies';
-import heroTypes, { Swordsman } from '../../Entities/Heroes';
+import heroTypes, { Magician, Swordsman } from '../../Entities/Heroes';
 import { generateTeam } from '../generators';
 
 describe('Функция generateTeam(allowedTypes, maxLevel, characterCount)', () => {
@@ -52,5 +52,32 @@ describe('Функция generateTeam(allowedTypes, maxLevel, characterCount)', 
     const characterCount = 3;
 
     expect(() => generateTeam(allowedTypes, maxLevel, characterCount)).toThrow();
+  });
+
+  it('передан Magician в allowedTypes; должно выдавать ошибку при невозможности \
+создать команду из-за ограничений', () => {
+    const allowedTypes = [Magician];
+    const maxLevel = 1;
+    const characterCount = 2; // Пытаемся создать команду из 2 магов
+
+    expect(() => {
+      generateTeam(allowedTypes, maxLevel, characterCount);
+    }).toThrow(
+      `Превышен лимит попыток генерации команды после ${characterCount * 100} попыток`
+    );
+  });
+
+  it('должен добавлять не более одного мага в команду', () => {
+    const allowedTypes = [Magician, Swordsman];
+    const maxLevel = 4;
+    const characterCount = 5;
+
+    const team = generateTeam(allowedTypes, maxLevel, characterCount);
+
+    const magicianCount = team.members.filter(
+      (member) => member.constructor.name === 'Magician'
+    ).length;
+
+    expect(magicianCount).toBeLessThanOrEqual(1);
   });
 });
